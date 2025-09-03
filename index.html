@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Comparison Interface</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Buy Page Grid Test</h1>
+            <p class="subtitle">Compare vehicle specifications and find the perfect match</p>
+        </header>
+
+        <main class="main-content">
+            <div class="controls-section">
+                <div class="data-source-tabs">
+                    <button class="tab-button active" data-source="file">Upload File</button>
+                    <button class="tab-button" data-source="api">API Search</button>
+                </div>
+
+                <div class="data-source-content">
+                    <!-- File Upload Section -->
+                    <div class="data-source-panel active" id="file-panel">
+                        <div class="file-input-container">
+                            <label for="vehicle-data-file" class="file-input-label">
+                                <span class="file-input-text">Choose Vehicle Data File</span>
+                                <input type="file" id="vehicle-data-file" accept=".json" class="file-input">
+                                <span class="file-input-button">Browse</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- API Search Section -->
+                    <div class="data-source-panel" id="api-panel">
+                        <div class="api-search-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="make-code">Make Code</label>
+                                    <input type="text" id="make-code" placeholder="e.g., FO" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="model-code">Model Code</label>
+                                    <input type="text" id="model-code" placeholder="e.g., RA" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="limit">Results Limit</label>
+                                    <select id="limit" class="form-select">
+                                        <option value="10">10 vehicles</option>
+                                        <option value="20">20 vehicles</option>
+                                        <option value="50">50 vehicles</option>
+                                        <option value="100">100 vehicles</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="current-only">
+                                        <input type="checkbox" id="current-only" checked>
+                                        Current models only
+                                    </label>
+                                </div>
+                            </div>
+                            <button id="search-api" class="search-button">
+                                <span class="search-icon">🔍</span>
+                                Search Vehicles
+                            </button>
+                        </div>
+                        <div class="api-info">
+                            <p><strong>API Endpoint:</strong> <code>vehicle-data.beta.dev-syd.carexpert.com.au</code></p>
+                            <p>Enter make and model codes to search for vehicles. Common codes: FO (Ford), TO (Toyota), HO (Honda), NI (Nissan).</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label for="category-filter">Filter by Category:</label>
+                        <select id="category-filter" class="filter-select">
+                            <option value="all">All Categories</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="sort-option">Sort by:</label>
+                        <select id="sort-option" class="filter-select">
+                            <option value="price-low">Price (Low to High)</option>
+                            <option value="price-high">Price (High to Low)</option>
+                            <option value="year-new">Year (Newest First)</option>
+                            <option value="year-old">Year (Oldest First)</option>
+                            <option value="trim">Trim Level</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading-indicator" id="loading-indicator">
+                <div class="spinner"></div>
+                <p>Loading vehicle data...</p>
+            </div>
+
+            <div class="error-message" id="error-message" style="display: none;">
+                <h3>Error Loading Data</h3>
+                <p id="error-text"></p>
+                <button onclick="location.reload()" class="retry-button">Try Again</button>
+            </div>
+
+            <div class="comparison-grid" id="comparison-grid">
+                <!-- Vehicle cards will be dynamically inserted here -->
+            </div>
+
+            <div class="no-data-message" id="no-data-message" style="display: none;">
+                <h3>No Vehicle Data Available</h3>
+                <p>Please load a valid JSON file or search for vehicles using the API to begin comparison.</p>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2024 Vehicle Comparison Tool. Built with modern web technologies.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
