@@ -10,10 +10,11 @@ class VehicleComparison {
         this.categories = new Set();
         this.currentFilter = 'all';
         this.currentSort = 'price-low';
-        this.apiBaseUrl = 'https://vehicle-data.beta.dev-syd.carexpert.com.au/v2/vehicles';
+        this.itemsPerPage = 10;
+        this.dataLabelMapping = null;
         
         this.initializeEventListeners();
-        this.loadSampleData();
+        this.loadDataLabelMapping();
     }
 
     initializeEventListeners() {
@@ -22,21 +23,15 @@ class VehicleComparison {
             button.addEventListener('click', (e) => this.switchTab(e.target.dataset.source));
         });
 
+        // Preloaded data dropdown handler
+        const preloadedSelect = document.getElementById('preloaded-data-select');
+        preloadedSelect.addEventListener('change', (e) => this.handlePreloadedDataSelection(e));
+
         // File input handler
         const fileInput = document.getElementById('vehicle-data-file');
         fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
 
-        // API search handler
-        const searchButton = document.getElementById('search-api');
-        searchButton.addEventListener('click', () => this.searchVehicles());
 
-        // Enter key support for API search
-        document.getElementById('make-code').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.searchVehicles();
-        });
-        document.getElementById('model-code').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.searchVehicles();
-        });
 
         // Filter and sort handlers
         document.getElementById('category-filter').addEventListener('change', (e) => {
@@ -48,6 +43,25 @@ class VehicleComparison {
             this.currentSort = e.target.value;
             this.renderComparisonGrid();
         });
+
+        document.getElementById('items-per-page').addEventListener('change', (e) => {
+            this.itemsPerPage = e.target.value === 'all' ? null : parseInt(e.target.value);
+            this.renderComparisonGrid();
+        });
+    }
+
+    async loadDataLabelMapping() {
+        try {
+            const response = await fetch('dataLabelMapping.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            this.dataLabelMapping = await response.json();
+            console.log('Data label mapping loaded successfully');
+        } catch (error) {
+            console.error('Error loading data label mapping:', error);
+            console.warn('Continuing without data label mapping - using fallback formatting');
+        }
     }
 
     switchTab(source) {
@@ -63,7 +77,7 @@ class VehicleComparison {
     async loadSampleData() {
         try {
             this.showLoading(true);
-            const response = await fetch('vehicleData/juke.json');
+            const response = await fetch('vehicleData/allJuke.json');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -75,96 +89,27 @@ class VehicleComparison {
         }
     }
 
-    async searchVehicles() {
-        const makeCode = document.getElementById('make-code').value.trim().toUpperCase();
-        const modelCode = document.getElementById('model-code').value.trim().toUpperCase();
-        const limit = document.getElementById('limit').value;
-        const currentOnly = document.getElementById('current-only').checked;
-
-        if (!makeCode || !modelCode) {
-            this.showError('Please enter both make code and model code to search.');
-            return;
-        }
+    async handlePreloadedDataSelection(event) {
+        const selectedFile = event.target.value;
+        if (!selectedFile) return;
 
         try {
             this.showLoading(true);
-            const searchButton = document.getElementById('search-api');
-            searchButton.disabled = true;
-            searchButton.innerHTML = '<span class="search-icon">⏳</span> Searching...';
-
-            const params = new URLSearchParams({
-                data_source: 'jato',
-                view: 'full',
-                make_code: makeCode,
-                model_code: modelCode,
-                is_current: currentOnly.toString(),
-                page: '1',
-                limit: limit
-            });
-
-            const url = `${this.apiBaseUrl}?${params}`;
-            console.log('Searching API:', url);
-
-            // Display the URL being used
-            this.displayApiUrl(url);
-
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            });
-
+            const response = await fetch(`vehicleData/${selectedFile}`);
             if (!response.ok) {
-                throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-
             const data = await response.json();
-            console.log('API Response:', data);
-
-            if (data.data && data.data.length > 0) {
-                this.processVehicleData(data);
-            } else {
-                this.showError(`No vehicles found for make code "${makeCode}" and model code "${modelCode}". Please try different codes.`);
-            }
-
+            this.processVehicleData(data);
         } catch (error) {
-            console.error('Error searching vehicles:', error);
-            this.showError(`Failed to search vehicles: ${error.message}. Please check your internet connection and try again.`);
-        } finally {
-            const searchButton = document.getElementById('search-api');
-            searchButton.disabled = false;
-            searchButton.innerHTML = '<span class="search-icon">🔍</span> Search Vehicles';
-            this.showLoading(false);
+            console.error('Error loading preloaded data:', error);
+            this.showError(`Failed to load ${selectedFile}. Please check if the file exists and is accessible.`);
         }
     }
 
-    displayApiUrl(url) {
-        // Create or update the API URL display
-        let urlDisplay = document.getElementById('api-url-display');
-        if (!urlDisplay) {
-            urlDisplay = document.createElement('div');
-            urlDisplay.id = 'api-url-display';
-            urlDisplay.className = 'api-url-display';
-            
-            // Insert after the search button
-            const searchButton = document.getElementById('search-api');
-            searchButton.parentNode.insertBefore(urlDisplay, searchButton.nextSibling);
-        }
 
-        urlDisplay.innerHTML = `
-            <div class="api-url-header">
-                <strong>API Request URL:</strong>
-                <button class="copy-url-button" onclick="navigator.clipboard.writeText('${url}')" title="Copy URL">
-                    📋 Copy
-                </button>
-            </div>
-            <div class="api-url-content">
-                <code>${url}</code>
-            </div>
-        `;
-    }
+
+
 
     handleFileUpload(event) {
         const file = event.target.files[0];
@@ -206,6 +151,7 @@ class VehicleComparison {
             this.vehicles = vehicles.map(vehicle => this.normalizeVehicleData(vehicle));
             this.identifyDifferences();
             this.populateCategoryFilter();
+            this.renderStatistics();
             this.renderComparisonGrid();
             this.showLoading(false);
         } catch (error) {
@@ -217,13 +163,14 @@ class VehicleComparison {
     normalizeVehicleData(vehicle) {
         // Handle different data structures from the sample and API
         const vehicleData = vehicle.vehicle || vehicle;
+        const generalInfo = vehicleData.vehicleGeneralInfo || {};
         
         return {
             id: vehicleData.vehicleId || vehicleData.id || Math.random().toString(36),
-            make: vehicleData.make || 'Unknown',
-            model: vehicleData.model || 'Unknown',
-            trim: vehicleData.trim || 'Base',
-            versionName: vehicleData.versionName || '',
+            make: generalInfo.localMake || vehicleData.make || 'Unknown',
+            model: generalInfo.localModel || vehicleData.model || 'Unknown',
+            trim: generalInfo.localTrimLevel || vehicleData.trim || 'Base',
+            versionName: generalInfo.localVersionName || vehicleData.versionName || '',
             year: vehicleData.modelYear || vehicleData.year || new Date().getFullYear(),
             price: vehicleData.price || 0,
             specifications: this.extractSpecifications(vehicleData),
@@ -262,7 +209,20 @@ class VehicleComparison {
                 if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                     Object.assign(flattened, this.flattenObject(value, newKey));
                 } else {
-                    flattened[newKey] = value;
+                    // Check if this is a local field and prefer it over non-local
+                    const isLocalField = key.startsWith('local');
+                    const nonLocalKey = key.replace(/^local/, '');
+                    const nonLocalNewKey = prefix ? `${prefix}.${nonLocalKey}` : nonLocalKey;
+                    
+                    if (isLocalField) {
+                        // Use the local field without the 'local' prefix
+                        flattened[nonLocalNewKey] = value;
+                    } else {
+                        // Only add non-local field if no local version exists
+                        if (!obj[`local${key.charAt(0).toUpperCase() + key.slice(1)}`]) {
+                            flattened[newKey] = value;
+                        }
+                    }
                 }
             }
         }
@@ -315,6 +275,97 @@ class VehicleComparison {
         });
 
         this.differences = differences;
+    }
+
+    calculateFieldDifferenceStatistics() {
+        if (this.vehicles.length < 2) {
+            return {
+                totalFields: 0,
+                differentFields: 0,
+                identicalFields: 0,
+                categoryBreakdown: {},
+                mostDifferentCategory: null,
+                leastDifferentCategory: null,
+                averageDifferencesPerCategory: 0
+            };
+        }
+
+        const allSpecs = {};
+        const categoryStats = {};
+
+        // Collect all specifications across all vehicles
+        this.vehicles.forEach(vehicle => {
+            Object.keys(vehicle.specifications).forEach(category => {
+                if (!allSpecs[category]) allSpecs[category] = {};
+                if (!categoryStats[category]) {
+                    categoryStats[category] = {
+                        total: 0,
+                        different: 0,
+                        identical: 0
+                    };
+                }
+                
+                Object.keys(vehicle.specifications[category]).forEach(spec => {
+                    if (!allSpecs[category][spec]) allSpecs[category][spec] = new Set();
+                    allSpecs[category][spec].add(vehicle.specifications[category][spec]);
+                });
+            });
+        });
+
+        // Calculate differences per category - count unique field names, not instances
+        Object.keys(allSpecs).forEach(category => {
+            const uniqueFieldNames = Object.keys(allSpecs[category]);
+            categoryStats[category].total = uniqueFieldNames.length;
+            
+            uniqueFieldNames.forEach(spec => {
+                if (allSpecs[category][spec].size > 1) {
+                    categoryStats[category].different++;
+                } else {
+                    categoryStats[category].identical++;
+                }
+            });
+        });
+
+        // Calculate totals
+        const totalFields = Object.values(categoryStats).reduce((sum, stats) => sum + stats.total, 0);
+        const differentFields = Object.values(categoryStats).reduce((sum, stats) => sum + stats.different, 0);
+        const identicalFields = Object.values(categoryStats).reduce((sum, stats) => sum + stats.identical, 0);
+
+        // Find most and least different categories
+        let mostDifferentCategory = null;
+        let leastDifferentCategory = null;
+        let maxDifferenceRatio = 0;
+        let minDifferenceRatio = 1;
+
+        Object.keys(categoryStats).forEach(category => {
+            const stats = categoryStats[category];
+            const differenceRatio = stats.total > 0 ? stats.different / stats.total : 0;
+            
+            if (differenceRatio > maxDifferenceRatio) {
+                maxDifferenceRatio = differenceRatio;
+                mostDifferentCategory = category;
+            }
+            
+            if (differenceRatio < minDifferenceRatio && stats.total > 0) {
+                minDifferenceRatio = differenceRatio;
+                leastDifferentCategory = category;
+            }
+        });
+
+        const averageDifferencesPerCategory = Object.keys(categoryStats).length > 0 
+            ? differentFields / Object.keys(categoryStats).length 
+            : 0;
+
+        return {
+            totalFields,
+            differentFields,
+            identicalFields,
+            categoryBreakdown: categoryStats,
+            mostDifferentCategory,
+            leastDifferentCategory,
+            averageDifferencesPerCategory,
+            differencePercentage: totalFields > 0 ? (differentFields / totalFields) * 100 : 0
+        };
     }
 
     populateCategoryFilter() {
@@ -381,6 +432,88 @@ class VehicleComparison {
         this.observeCards();
     }
 
+    renderStatistics() {
+        const statsSection = document.getElementById('statistics-section');
+        const statsGrid = document.getElementById('stats-grid');
+        
+        if (this.vehicles.length < 2) {
+            statsSection.style.display = 'none';
+            return;
+        }
+
+        const stats = this.calculateFieldDifferenceStatistics();
+        
+        statsGrid.innerHTML = `
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">Total Fields</div>
+                    <div class="stat-value">${stats.totalFields}</div>
+                </div>
+                <div class="stat-description">Total number of specification fields across all vehicles</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">Different Fields</div>
+                    <div class="stat-value">${stats.differentFields}</div>
+                </div>
+                <div class="stat-description">Fields that vary between vehicles</div>
+                <div class="stat-details">
+                    <strong>${stats.differencePercentage.toFixed(1)}%</strong> of all fields differ
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">Identical Fields</div>
+                    <div class="stat-value">${stats.identicalFields}</div>
+                </div>
+                <div class="stat-description">Fields that are the same across all vehicles</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">Categories</div>
+                    <div class="stat-value">${Object.keys(stats.categoryBreakdown).length}</div>
+                </div>
+                <div class="stat-description">Number of specification categories</div>
+                <div class="stat-details">
+                    <strong>${stats.averageDifferencesPerCategory.toFixed(1)}</strong> avg differences per category
+                </div>
+            </div>
+            
+            ${stats.mostDifferentCategory ? `
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">Most Different</div>
+                    <div class="stat-value">${this.formatCategoryName(stats.mostDifferentCategory)}</div>
+                </div>
+                <div class="stat-description">Category with highest variation</div>
+                <div class="stat-details">
+                    <strong>${stats.categoryBreakdown[stats.mostDifferentCategory].different}</strong> of 
+                    <strong>${stats.categoryBreakdown[stats.mostDifferentCategory].total}</strong> fields differ
+                </div>
+            </div>
+            ` : ''}
+            
+            ${stats.leastDifferentCategory ? `
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">Most Similar</div>
+                    <div class="stat-value">${this.formatCategoryName(stats.leastDifferentCategory)}</div>
+                </div>
+                <div class="stat-description">Category with lowest variation</div>
+                <div class="stat-details">
+                    <strong>${stats.categoryBreakdown[stats.leastDifferentCategory].different}</strong> of 
+                    <strong>${stats.categoryBreakdown[stats.leastDifferentCategory].total}</strong> fields differ
+                </div>
+            </div>
+            ` : ''}
+        `;
+        
+        statsSection.style.display = 'block';
+    }
+
     createVehicleCard(vehicle, differences) {
         const premiumFeatures = this.identifyPremiumFeatures(vehicle, differences);
         const keyFeatures = this.getKeyFeatures(vehicle, differences);
@@ -400,11 +533,7 @@ class VehicleComparison {
                     ${this.renderDifferences(vehicle, differences, premiumFeatures)}
                 </div>
                 
-                <div class="feature-tags">
-                    ${keyFeatures.map(feature => 
-                        `<span class="feature-tag ${premiumFeatures.includes(feature) ? 'premium' : ''}">${feature}</span>`
-                    ).join('')}
-                </div>
+
                 
                 <div class="card-actions">
                     <button class="deal-button" onclick="showDealAlert('${vehicle.make}', '${vehicle.model}')">
@@ -420,15 +549,15 @@ class VehicleComparison {
             return '<div class="difference-row"><div class="difference-label">No differences found</div></div>';
         }
 
-        return differences.slice(0, 8).map(diff => {
+        return differences.slice(0, this.itemsPerPage || 20).map(diff => {
             const value = diff.values[vehicle.id] || 'Not Available';
             const isPremium = premiumFeatures.some(feature => 
-                this.formatSpecificationName(diff.specification).toLowerCase().includes(feature.toLowerCase())
+                this.formatSpecificationName(diff.specification, diff.category).toLowerCase().includes(feature.toLowerCase())
             );
             
             return `
                 <div class="difference-row">
-                    <div class="difference-label">${this.formatSpecificationName(diff.specification)}</div>
+                    <div class="difference-label">${this.formatSpecificationName(diff.specification, diff.category)}</div>
                     <div class="difference-value ${isPremium ? 'premium' : ''}">${this.formatValue(value)}</div>
                 </div>
             `;
@@ -444,7 +573,7 @@ class VehicleComparison {
             
             // Check if this vehicle has a "better" value
             if (this.isPremiumValue(vehicleValue, otherValues, diff.specification)) {
-                premiumFeatures.push(this.formatSpecificationName(diff.specification));
+                premiumFeatures.push(this.formatSpecificationName(diff.specification, diff.category));
             }
         });
         
@@ -508,13 +637,41 @@ class VehicleComparison {
         return features.slice(0, 4); // Limit to 4 key features
     }
 
-    formatSpecificationName(spec) {
-        return spec
+    formatSpecificationName(spec, category = null) {
+        // Try to find the specification in the data label mapping
+        if (this.dataLabelMapping) {
+            let categoryName, specification;
+            
+            // Handle both formats: "category.specification" and just "specification" with separate category
+            if (spec.includes('.')) {
+                const specParts = spec.split('.');
+                categoryName = specParts[0];
+                specification = specParts[1];
+            } else if (category) {
+                categoryName = category;
+                specification = spec;
+            }
+            
+            if (categoryName && specification) {
+                // Look for the specification in the mapping
+                if (this.dataLabelMapping[categoryName] && this.dataLabelMapping[categoryName][specification]) {
+                    const label = this.dataLabelMapping[categoryName][specification];
+                    if (label && label.en) {
+                        return label.en;
+                    }
+                }
+            }
+        }
+        
+        // Fallback to original formatting if not found in mapping
+        const fallbackLabel = spec
             .split('.')
             .pop()
             .replace(/([A-Z])/g, ' $1')
             .replace(/^./, str => str.toUpperCase())
             .trim();
+        
+        return fallbackLabel;
     }
 
     formatFeatureName(spec, value) {
@@ -597,11 +754,13 @@ class VehicleComparison {
         const grid = document.getElementById('comparison-grid');
         const error = document.getElementById('error-message');
         const noData = document.getElementById('no-data-message');
+        const stats = document.getElementById('statistics-section');
         
         loading.style.display = show ? 'block' : 'none';
         grid.style.display = show ? 'none' : 'grid';
         error.style.display = 'none';
         noData.style.display = 'none';
+        if (show) stats.style.display = 'none';
     }
 
     showError(message) {
@@ -609,11 +768,13 @@ class VehicleComparison {
         const grid = document.getElementById('comparison-grid');
         const error = document.getElementById('error-message');
         const noData = document.getElementById('no-data-message');
+        const stats = document.getElementById('statistics-section');
         
         loading.style.display = 'none';
         grid.style.display = 'none';
         error.style.display = 'block';
         noData.style.display = 'none';
+        stats.style.display = 'none';
         
         document.getElementById('error-text').textContent = message;
     }
@@ -623,11 +784,13 @@ class VehicleComparison {
         const grid = document.getElementById('comparison-grid');
         const error = document.getElementById('error-message');
         const noData = document.getElementById('no-data-message');
+        const stats = document.getElementById('statistics-section');
         
         loading.style.display = 'none';
         grid.style.display = 'none';
         error.style.display = 'none';
         noData.style.display = 'block';
+        stats.style.display = 'none';
     }
 }
 

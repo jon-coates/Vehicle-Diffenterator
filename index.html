@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="app-container">
@@ -19,60 +19,35 @@
         <main class="main-content">
             <div class="controls-section">
                 <div class="data-source-tabs">
-                    <button class="tab-button active" data-source="file">Upload File</button>
-                    <button class="tab-button" data-source="api">API Search</button>
+                    <button class="tab-button active" data-source="preloaded">Preloaded Data</button>
+                    <button class="tab-button" data-source="file">Upload File</button>
                 </div>
 
                 <div class="data-source-content">
+                    <!-- Preloaded Data Section -->
+                    <div class="data-source-panel active" id="preloaded-panel">
+                        <div class="preloaded-data-container">
+                            <label for="preloaded-data-select" class="preloaded-data-label">
+                                Select Preloaded Vehicle Data:
+                            </label>
+                            <select id="preloaded-data-select" class="preloaded-data-select">
+                                <option value="">Choose a preloaded dataset...</option>
+                                <option value="FDRA.json">Ford Ranger Vehicle Data</option>
+                                <option value="allJuke.json">Nissan Juke Data</option>
+                                <option value="nissanPatrol.json">Nissan Patrol Data</option>
+                                <option value="suzukiJimny.json">Suzuki Jimny Data</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- File Upload Section -->
-                    <div class="data-source-panel active" id="file-panel">
+                    <div class="data-source-panel" id="file-panel">
                         <div class="file-input-container">
                             <label for="vehicle-data-file" class="file-input-label">
                                 <span class="file-input-text">Choose Vehicle Data File</span>
                                 <input type="file" id="vehicle-data-file" accept=".json" class="file-input">
                                 <span class="file-input-button">Browse</span>
                             </label>
-                        </div>
-                    </div>
-
-                    <!-- API Search Section -->
-                    <div class="data-source-panel" id="api-panel">
-                        <div class="api-search-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="make-code">Make Code</label>
-                                    <input type="text" id="make-code" placeholder="e.g., FO" class="form-input">
-                                </div>
-                                <div class="form-group">
-                                    <label for="model-code">Model Code</label>
-                                    <input type="text" id="model-code" placeholder="e.g., RA" class="form-input">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="limit">Results Limit</label>
-                                    <select id="limit" class="form-select">
-                                        <option value="10">10 vehicles</option>
-                                        <option value="20">20 vehicles</option>
-                                        <option value="50">50 vehicles</option>
-                                        <option value="100">100 vehicles</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="current-only">
-                                        <input type="checkbox" id="current-only" checked>
-                                        Current models only
-                                    </label>
-                                </div>
-                            </div>
-                            <button id="search-api" class="search-button">
-                                <span class="search-icon">🔍</span>
-                                Search Vehicles
-                            </button>
-                        </div>
-                        <div class="api-info">
-                            <p><strong>API Endpoint:</strong> <code>vehicle-data.beta.dev-syd.carexpert.com.au</code></p>
-                            <p>Enter make and model codes to search for vehicles. Common codes: FO (Ford), TO (Toyota), HO (Honda), NI (Nissan).</p>
                         </div>
                     </div>
                 </div>
@@ -95,6 +70,17 @@
                             <option value="trim">Trim Level</option>
                         </select>
                     </div>
+                    
+                    <div class="filter-group">
+                        <label for="items-per-page">Specifications per vehicle:</label>
+                        <select id="items-per-page" class="filter-select">
+                            <option value="all">Show All</option>
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -109,13 +95,20 @@
                 <button onclick="location.reload()" class="retry-button">Try Again</button>
             </div>
 
+            <div class="statistics-section" id="statistics-section" style="display: none;">
+                <h3>Field Difference Statistics</h3>
+                <div class="stats-grid" id="stats-grid">
+                    <!-- Statistics will be dynamically inserted here -->
+                </div>
+            </div>
+
             <div class="comparison-grid" id="comparison-grid">
                 <!-- Vehicle cards will be dynamically inserted here -->
             </div>
 
             <div class="no-data-message" id="no-data-message" style="display: none;">
                 <h3>No Vehicle Data Available</h3>
-                <p>Please load a valid JSON file or search for vehicles using the API to begin comparison.</p>
+                <p>Please load a valid JSON file to begin comparison.</p>
             </div>
         </main>
 
