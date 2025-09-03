@@ -31,7 +31,11 @@ class VehicleComparison {
         const fileInput = document.getElementById('vehicle-data-file');
         fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
 
-
+        // Accordion handler
+        const accordionHeader = document.getElementById('accordion-header');
+        if (accordionHeader) {
+            accordionHeader.addEventListener('click', () => this.toggleAccordion());
+        }
 
         // Filter and sort handlers
         document.getElementById('category-filter').addEventListener('change', (e) => {
@@ -72,6 +76,22 @@ class VehicleComparison {
         // Update panels
         document.querySelectorAll('.data-source-panel').forEach(panel => panel.classList.remove('active'));
         document.getElementById(`${source}-panel`).classList.add('active');
+    }
+
+    toggleAccordion() {
+        const accordionHeader = document.getElementById('accordion-header');
+        const accordionContent = document.getElementById('accordion-content');
+        const accordionIcon = document.getElementById('accordion-icon');
+
+        const isExpanded = accordionHeader.classList.contains('expanded');
+        
+        if (isExpanded) {
+            accordionHeader.classList.remove('expanded');
+            accordionContent.classList.remove('expanded');
+        } else {
+            accordionHeader.classList.add('expanded');
+            accordionContent.classList.add('expanded');
+        }
     }
 
     async loadSampleData() {
@@ -433,11 +453,11 @@ class VehicleComparison {
     }
 
     renderStatistics() {
-        const statsSection = document.getElementById('statistics-section');
+        const accordion = document.getElementById('statistics-accordion');
         const statsGrid = document.getElementById('stats-grid');
         
         if (this.vehicles.length < 2) {
-            statsSection.style.display = 'none';
+            accordion.style.display = 'none';
             return;
         }
 
@@ -511,7 +531,7 @@ class VehicleComparison {
             ` : ''}
         `;
         
-        statsSection.style.display = 'block';
+        accordion.style.display = 'block';
     }
 
     createVehicleCard(vehicle, differences) {
@@ -754,13 +774,13 @@ class VehicleComparison {
         const grid = document.getElementById('comparison-grid');
         const error = document.getElementById('error-message');
         const noData = document.getElementById('no-data-message');
-        const stats = document.getElementById('statistics-section');
+        const accordion = document.getElementById('statistics-accordion');
         
         loading.style.display = show ? 'block' : 'none';
         grid.style.display = show ? 'none' : 'grid';
         error.style.display = 'none';
         noData.style.display = 'none';
-        if (show) stats.style.display = 'none';
+        if (show) accordion.style.display = 'none';
     }
 
     showError(message) {
@@ -768,13 +788,13 @@ class VehicleComparison {
         const grid = document.getElementById('comparison-grid');
         const error = document.getElementById('error-message');
         const noData = document.getElementById('no-data-message');
-        const stats = document.getElementById('statistics-section');
+        const accordion = document.getElementById('statistics-accordion');
         
         loading.style.display = 'none';
         grid.style.display = 'none';
         error.style.display = 'block';
         noData.style.display = 'none';
-        stats.style.display = 'none';
+        accordion.style.display = 'none';
         
         document.getElementById('error-text').textContent = message;
     }
@@ -784,13 +804,13 @@ class VehicleComparison {
         const grid = document.getElementById('comparison-grid');
         const error = document.getElementById('error-message');
         const noData = document.getElementById('no-data-message');
-        const stats = document.getElementById('statistics-section');
+        const accordion = document.getElementById('statistics-accordion');
         
         loading.style.display = 'none';
         grid.style.display = 'none';
         error.style.display = 'none';
         noData.style.display = 'block';
-        stats.style.display = 'none';
+        accordion.style.display = 'none';
     }
 }
 
