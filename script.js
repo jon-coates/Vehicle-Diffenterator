@@ -15,6 +15,7 @@ class VehicleComparison {
         
         this.initializeEventListeners();
         this.loadDataLabelMapping();
+        this.loadDefaultData();
     }
 
     initializeEventListeners() {
@@ -65,6 +66,28 @@ class VehicleComparison {
         } catch (error) {
             console.error('Error loading data label mapping:', error);
             console.warn('Continuing without data label mapping - using fallback formatting');
+        }
+    }
+
+    async loadDefaultData() {
+        try {
+            // Load the first available dataset by default (Suzuki Jimny)
+            const response = await fetch('vehicleData/suzukiJimny.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            this.processVehicleData(data);
+            
+            // Update the dropdown to show the selected dataset
+            const preloadedSelect = document.getElementById('preloaded-data-select');
+            if (preloadedSelect) {
+                preloadedSelect.value = 'suzukiJimny.json';
+            }
+        } catch (error) {
+            console.error('Error loading default data:', error);
+            // If default data fails, show the no data message instead of error
+            this.showNoData();
         }
     }
 
