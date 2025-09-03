@@ -201,16 +201,20 @@ class VehicleComparison {
     extractSpecifications(vehicleData) {
         const specs = {};
         
-        // Extract specifications from various categories
-        const categories = [
-            'audio', 'bodyExterior', 'brakes', 'convenience', 'dimensions',
-            'doors', 'engine', 'fuel', 'instrumentation', 'interiorTrim',
-            'lights', 'performance', 'safety', 'seats', 'steering',
-            'suspension', 'transmission', 'ventilation', 'visibility', 'wheels'
+        // Extract specifications from all available categories dynamically
+        // Skip non-specification fields that shouldn't be included
+        const excludeFields = [
+            'vehicleId', 'make', 'model', 'trim', 'versionName', 'modelYear', 
+            'price', 'isCurrent', 'vehicleGeneralInfo', 'standardText',
+            'makeDetails', 'modelDetails', 'calculated'
         ];
-
-        categories.forEach(category => {
-            if (vehicleData[category]) {
+        
+        Object.keys(vehicleData).forEach(category => {
+            // Only include categories that are objects and not in the exclude list
+            if (typeof vehicleData[category] === 'object' && 
+                vehicleData[category] !== null && 
+                !Array.isArray(vehicleData[category]) &&
+                !excludeFields.includes(category)) {
                 specs[category] = this.flattenObject(vehicleData[category]);
             }
         });
@@ -250,6 +254,36 @@ class VehicleComparison {
         return flattened;
     }
 
+    shouldExcludeField(category, specification) {
+        const specLower = specification.toLowerCase();
+        
+        // Performance field exclusions
+        if (category === 'performance') {
+            const performanceExcludeTerms = ['mph', 'mpg', 'gallon', 'miles'];
+            return performanceExcludeTerms.some(term => specLower.includes(term));
+        }
+        
+        // Dimension field exclusions
+        if (category === 'dimensions') {
+            const dimensionExcludeTerms = ['inches', 'feet', 'cubic feet', 'in', 'cuft'];
+            return dimensionExcludeTerms.some(term => specLower.includes(term));
+        }
+        
+        // Warranty field exclusions
+        if (category === 'warranty') {
+            const warrantyExcludeTerms = ['miles'];
+            return warrantyExcludeTerms.some(term => specLower.includes(term));
+        }
+        
+        // Weight field exclusions
+        if (category === 'weights') {
+            const weightExcludeTerms = ['pounds', 'lbs', 'lb'];
+            return weightExcludeTerms.some(term => specLower.includes(term));
+        }
+        
+        return false;
+    }
+
     identifyDifferences() {
         if (this.vehicles.length < 2) {
             this.differences = [];
@@ -265,6 +299,11 @@ class VehicleComparison {
                 if (!allSpecs[category]) allSpecs[category] = {};
                 
                 Object.keys(vehicle.specifications[category]).forEach(spec => {
+                    // Skip fields that should be excluded based on category and specification
+                    if (this.shouldExcludeField(category, spec)) {
+                        return;
+                    }
+                    
                     if (!allSpecs[category][spec]) allSpecs[category][spec] = new Set();
                     allSpecs[category][spec].add(vehicle.specifications[category][spec]);
                 });
@@ -326,6 +365,11 @@ class VehicleComparison {
                 }
                 
                 Object.keys(vehicle.specifications[category]).forEach(spec => {
+                    // Skip fields that should be excluded based on category and specification
+                    if (this.shouldExcludeField(category, spec)) {
+                        return;
+                    }
+                    
                     if (!allSpecs[category][spec]) allSpecs[category][spec] = new Set();
                     allSpecs[category][spec].add(vehicle.specifications[category][spec]);
                 });
@@ -351,23 +395,24 @@ class VehicleComparison {
         const differentFields = Object.values(categoryStats).reduce((sum, stats) => sum + stats.different, 0);
         const identicalFields = Object.values(categoryStats).reduce((sum, stats) => sum + stats.identical, 0);
 
-        // Find most and least different categories
+        // Find most and least different categories based on absolute differences
         let mostDifferentCategory = null;
         let leastDifferentCategory = null;
-        let maxDifferenceRatio = 0;
-        let minDifferenceRatio = 1;
+        let maxDifferences = 0;
+        let minDifferences = Infinity;
 
         Object.keys(categoryStats).forEach(category => {
             const stats = categoryStats[category];
-            const differenceRatio = stats.total > 0 ? stats.different / stats.total : 0;
             
-            if (differenceRatio > maxDifferenceRatio) {
-                maxDifferenceRatio = differenceRatio;
+            // Find category with most absolute differences
+            if (stats.different > maxDifferences) {
+                maxDifferences = stats.different;
                 mostDifferentCategory = category;
             }
             
-            if (differenceRatio < minDifferenceRatio && stats.total > 0) {
-                minDifferenceRatio = differenceRatio;
+            // Find category with least absolute differences (but only if it has some differences)
+            if (stats.different < minDifferences && stats.different > 0) {
+                minDifferences = stats.different;
                 leastDifferentCategory = category;
             }
         });
@@ -462,6 +507,23 @@ class VehicleComparison {
         }
 
         const stats = this.calculateFieldDifferenceStatistics();
+        
+        // Debug logging to verify the fix
+        console.log('Field Difference Statistics:', stats);
+        console.log('Total categories found:', Object.keys(stats.categoryBreakdown).length);
+        
+        // Show top 10 categories by absolute differences
+        const sortedByDifferences = Object.entries(stats.categoryBreakdown)
+            .sort(([,a], [,b]) => b.different - a.different)
+            .slice(0, 10);
+        console.log('Top 10 categories by absolute differences:', sortedByDifferences);
+        
+        // Show top 10 categories by difference ratio
+        const sortedByRatio = Object.entries(stats.categoryBreakdown)
+            .map(([name, stats]) => [name, { ...stats, ratio: stats.total > 0 ? stats.different / stats.total : 0 }])
+            .sort(([,a], [,b]) => b.ratio - a.ratio)
+            .slice(0, 10);
+        console.log('Top 10 categories by difference ratio:', sortedByRatio);
         
         statsGrid.innerHTML = `
             <div class="stat-card">
