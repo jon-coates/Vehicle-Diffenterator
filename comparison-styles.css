@@ -90,7 +90,7 @@
 }
 
 .spec-item {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.25rem;
     padding-left: 1rem;
     position: relative;
 }
@@ -106,7 +106,7 @@
 .spec-name {
     font-weight: 500;
     color: #1a1a1a;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.1rem;
     font-size: 0.95rem;
 }
 
