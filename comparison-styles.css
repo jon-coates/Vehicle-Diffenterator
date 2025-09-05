@@ -29,19 +29,67 @@
     padding: 0;
     border: none;
     box-shadow: none;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e0 #f7fafc;
+    position: relative;
+}
+
+/* Add subtle gradient indicators for horizontal scroll */
+.comparison-table-container::before,
+.comparison-table-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.comparison-table-container::before {
+    left: 0;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.8), transparent);
+}
+
+.comparison-table-container::after {
+    right: 0;
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
+}
+
+.comparison-table-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.comparison-table-container::-webkit-scrollbar-track {
+    background: #f7fafc;
+    border-radius: 4px;
+}
+
+.comparison-table-container::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+}
+
+.comparison-table-container::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
 }
 
 /* Ford Escape style layout */
 .ford-escape-layout {
-    max-width: 1200px;
+    min-width: 1200px;
     margin: 0 auto;
     padding: 2rem;
     background: white;
+    width: max-content;
 }
 
 .main-title {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
+    padding: 1rem 0;
 }
 
 .main-title h1 {
@@ -59,23 +107,42 @@
 }
 
 .three-column-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    display: flex;
     gap: 2rem;
     align-items: start;
+    flex-wrap: nowrap;
+}
+
+/* For 4+ vehicles, use fixed column width */
+.multi-vehicle-layout {
+    display: flex;
+    gap: 2rem;
+    align-items: start;
+    flex-wrap: nowrap;
 }
 
 .spec-column {
     display: flex;
     flex-direction: column;
+    flex: 0 0 350px; /* Fixed width, don't grow or shrink */
+    min-width: 350px;
 }
 
 .column-header {
     font-size: 1.5rem;
     font-weight: 700;
     color: #1a1a1a;
+    margin-bottom: 0.5rem;
+    text-align: left;
+}
+
+.column-subheader {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #666;
     margin-bottom: 1.5rem;
     text-align: left;
+    font-style: italic;
 }
 
 .category-group {
@@ -317,8 +384,13 @@
 
 /* Responsive design */
 @media (max-width: 1024px) {
-    .three-column-layout {
-        grid-template-columns: 1fr 1fr;
+    .spec-column {
+        flex: 0 0 300px;
+        min-width: 300px;
+    }
+    
+    .three-column-layout,
+    .multi-vehicle-layout {
         gap: 1.5rem;
     }
     
@@ -328,9 +400,14 @@
 }
 
 @media (max-width: 768px) {
-    .three-column-layout {
-        grid-template-columns: 1fr;
-        gap: 2rem;
+    .spec-column {
+        flex: 0 0 280px;
+        min-width: 280px;
+    }
+    
+    .three-column-layout,
+    .multi-vehicle-layout {
+        gap: 1.5rem;
     }
     
     .ford-escape-layout {

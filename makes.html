@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Makes - Vehicle Differentiator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .makes-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .makes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .make-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .make-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-shadow-hover);
+        }
+        
+        .make-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--brand-red);
+        }
+        
+        .make-header {
+            margin-bottom: 1rem;
+        }
+        
+        .make-code {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .make-label {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--brand-red);
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+        
+        .make-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .make-status.current {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--accent-green);
+        }
+        
+        .make-status.discontinued {
+            background: rgba(107, 114, 128, 0.1);
+            color: var(--text-muted);
+        }
+        
+        .view-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--brand-red);
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius-sm);
+            font-weight: 500;
+            transition: var(--transition);
+            margin-top: 1rem;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .view-link:hover {
+            background: var(--brand-red-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.3);
+        }
+        
+        .view-link-icon {
+            font-size: 0.9rem;
+        }
+        
+        .search-controls {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            background: white;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--brand-red);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+        
+        .filter-tabs {
+            display: flex;
+            margin-bottom: 1rem;
+            background: var(--background-light);
+            border-radius: var(--border-radius-sm);
+            padding: 4px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .filter-tab {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .filter-tab.active {
+            background: var(--background-white);
+            color: var(--brand-red);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+        }
+        
+        .filter-tab:hover:not(.active) {
+            color: var(--text-primary);
+            background: var(--background-white);
+        }
+        
+        .stats-summary {
+            background: var(--background-light);
+            border-radius: var(--border-radius-sm);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        .stats-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        
+        .stats-text strong {
+            color: var(--brand-red);
+            font-weight: 600;
+        }
+        
+        @media (max-width: 768px) {
+            .makes-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .make-card {
+                padding: 1rem;
+            }
+            
+            .filter-tabs {
+                flex-direction: column;
+            }
+            
+            .filter-tab {
+                border-radius: 0;
+            }
+            
+            .filter-tab:first-child {
+                border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+            }
+            
+            .filter-tab:last-child {
+                border-radius: 0 0 var(--border-radius-sm) var(--border-radius-sm);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Vehicle Makes</h1>
+            <nav class="page-navigation">
+                <a href="index.html" class="nav-link">← Back to Main</a>
+                <a href="comparison.html" class="nav-link">Columnar Comparison →</a>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <div class="makes-container">
+                <div class="search-controls">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="all">All Makes</button>
+                        <button class="filter-tab" data-filter="current">Current Only</button>
+                        <button class="filter-tab" data-filter="discontinued">Discontinued</button>
+                    </div>
+                    
+                    <input type="text" id="search-input" class="search-input" placeholder="Search makes by name or code...">
+                    
+                    <div class="stats-summary">
+                        <div class="stats-text" id="stats-text">
+                            Loading makes data...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="makes-grid" id="makes-grid">
+                    <!-- Makes will be dynamically inserted here -->
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2024 Vehicle Comparison Tool. Built with modern web technologies.</p>
+        </footer>
+    </div>
+
+    <script>
+        let makesData = [];
+        let filteredMakes = [];
+
+        // Load makes data
+        async function loadMakesData() {
+            try {
+                const response = await fetch('data/makeCodes.json');
+                const data = await response.json();
+                makesData = data.data;
+                filteredMakes = [...makesData];
+                renderMakes();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading makes data:', error);
+                document.getElementById('makes-grid').innerHTML = '<div class="error-message"><h3>Error Loading Data</h3><p>Could not load makes data. Please try again later.</p></div>';
+            }
+        }
+
+        // Render makes
+        function renderMakes() {
+            const grid = document.getElementById('makes-grid');
+            
+            if (filteredMakes.length === 0) {
+                grid.innerHTML = '<div class="no-data-message"><h3>No Makes Found</h3><p>Try adjusting your search or filter criteria.</p></div>';
+                return;
+            }
+
+            grid.innerHTML = filteredMakes.map(make => `
+                <div class="make-card">
+                    <div class="make-header">
+                        <div class="make-code">Code: ${make.code}</div>
+                        <div class="make-label">${make.label}</div>
+                        <span class="make-status ${make.isCurrent ? 'current' : 'discontinued'}">
+                            ${make.isCurrent ? 'Current' : 'Discontinued'}
+                        </span>
+                    </div>
+                    <a href="https://vehicle-data.beta.dev-syd.carexpert.com.au/v2/makes/${make.code}/models" 
+                       class="view-link" 
+                       target="_blank" 
+                       rel="noopener noreferrer">
+                        <span class="view-link-icon">🔗</span>
+                        View Models
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        // Update statistics
+        function updateStats() {
+            const currentCount = makesData.filter(make => make.isCurrent).length;
+            const discontinuedCount = makesData.filter(make => !make.isCurrent).length;
+            const totalCount = makesData.length;
+            const filteredCount = filteredMakes.length;
+
+            const statsText = document.getElementById('stats-text');
+            if (filteredCount === totalCount) {
+                statsText.innerHTML = `Showing <strong>${totalCount}</strong> makes (<strong>${currentCount}</strong> current, <strong>${discontinuedCount}</strong> discontinued)`;
+            } else {
+                statsText.innerHTML = `Showing <strong>${filteredCount}</strong> of <strong>${totalCount}</strong> makes`;
+            }
+        }
+
+        // Filter makes
+        function filterMakes(filter) {
+            switch (filter) {
+                case 'current':
+                    filteredMakes = makesData.filter(make => make.isCurrent);
+                    break;
+                case 'discontinued':
+                    filteredMakes = makesData.filter(make => !make.isCurrent);
+                    break;
+                default:
+                    filteredMakes = [...makesData];
+            }
+            applySearch();
+        }
+
+        // Apply search filter
+        function applySearch() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            
+            if (searchTerm) {
+                filteredMakes = filteredMakes.filter(make => 
+                    make.label.toLowerCase().includes(searchTerm) || 
+                    make.code.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            renderMakes();
+            updateStats();
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMakesData();
+
+            // Filter tabs
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    filterMakes(this.dataset.filter);
+                });
+            });
+
+            // Search input
+            document.getElementById('search-input').addEventListener('input', function() {
+                const currentFilter = document.querySelector('.filter-tab.active').dataset.filter;
+                filterMakes(currentFilter);
+            });
+        });
+    </script>
+</body>
+</html>

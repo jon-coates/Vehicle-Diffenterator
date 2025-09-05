@@ -1,0 +1,454 @@
+{
+    "data": [
+      {
+        "code": "AB",
+        "label": "Abarth",
+        "isCurrent": true
+      },
+      {
+        "code": "AW",
+        "label": "ABC",
+        "isCurrent": true
+      },
+      {
+        "code": "AR",
+        "label": "Alfa Romeo",
+        "isCurrent": true
+      },
+      {
+        "code": "AL",
+        "label": "Alpine",
+        "isCurrent": true
+      },
+      {
+        "code": "AM",
+        "label": "Aston Martin",
+        "isCurrent": true
+      },
+      {
+        "code": "AU",
+        "label": "Audi",
+        "isCurrent": true
+      },
+      {
+        "code": "BE",
+        "label": "Bentley",
+        "isCurrent": true
+      },
+      {
+        "code": "BM",
+        "label": "BMW",
+        "isCurrent": true
+      },
+      {
+        "code": "BA",
+        "label": "BMW Alpina",
+        "isCurrent": true
+      },
+      {
+        "code": "BU",
+        "label": "Bugatti",
+        "isCurrent": true
+      },
+      {
+        "code": "BY",
+        "label": "BYD",
+        "isCurrent": true
+      },
+      {
+        "code": "CA",
+        "label": "Cadillac",
+        "isCurrent": true
+      },
+      {
+        "code": "CT",
+        "label": "Caterham",
+        "isCurrent": true
+      },
+      {
+        "code": "CE",
+        "label": "Chery",
+        "isCurrent": true
+      },
+      {
+        "code": "CH",
+        "label": "Chevrolet",
+        "isCurrent": true
+      },
+      {
+        "code": "CY",
+        "label": "Chrysler",
+        "isCurrent": true
+      },
+      {
+        "code": "CI",
+        "label": "Citroen",
+        "isCurrent": true
+      },
+      {
+        "code": "CU",
+        "label": "Cupra",
+        "isCurrent": true
+      },
+      {
+        "code": "DA",
+        "label": "Dacia",
+        "isCurrent": true
+      },
+      {
+        "code": "FB",
+        "label": "Deepal",
+        "isCurrent": true
+      },
+      {
+        "code": "FE",
+        "label": "Ferrari",
+        "isCurrent": true
+      },
+      {
+        "code": "FI",
+        "label": "Fiat",
+        "isCurrent": true
+      },
+      {
+        "code": "FD",
+        "label": "Ford",
+        "isCurrent": true
+      },
+      {
+        "code": "FO",
+        "label": "Foton",
+        "isCurrent": true
+      },
+      {
+        "code": "OS",
+        "label": "Geely",
+        "isCurrent": true
+      },
+      {
+        "code": "GE",
+        "label": "Genesis",
+        "isCurrent": true
+      },
+      {
+        "code": "RI",
+        "label": "GMC",
+        "isCurrent": true
+      },
+      {
+        "code": "GW",
+        "label": "GWM",
+        "isCurrent": true
+      },
+      {
+        "code": "HA",
+        "label": "Haval",
+        "isCurrent": true
+      },
+      {
+        "code": "HO",
+        "label": "Holden",
+        "isCurrent": false
+      },
+      {
+        "code": "HN",
+        "label": "Honda",
+        "isCurrent": true
+      },
+      {
+        "code": "HS",
+        "label": "HSV",
+        "isCurrent": true
+      },
+      {
+        "code": "HY",
+        "label": "Hyundai",
+        "isCurrent": true
+      },
+      {
+        "code": "IE",
+        "label": "Ineos",
+        "isCurrent": true
+      },
+      {
+        "code": "IN",
+        "label": "Infiniti",
+        "isCurrent": true
+      },
+      {
+        "code": "IS",
+        "label": "Isuzu",
+        "isCurrent": true
+      },
+      {
+        "code": "PX",
+        "label": "Iveco",
+        "isCurrent": true
+      },
+      {
+        "code": "BC",
+        "label": "JAC",
+        "isCurrent": true
+      },
+      {
+        "code": "FN",
+        "label": "Jaecoo",
+        "isCurrent": true
+      },
+      {
+        "code": "JG",
+        "label": "Jaguar",
+        "isCurrent": true
+      },
+      {
+        "code": "JE",
+        "label": "Jeep",
+        "isCurrent": true
+      },
+      {
+        "code": "KI",
+        "label": "Kia",
+        "isCurrent": true
+      },
+      {
+        "code": "LM",
+        "label": "Lamborghini",
+        "isCurrent": true
+      },
+      {
+        "code": "LR",
+        "label": "Land Rover",
+        "isCurrent": true
+      },
+      {
+        "code": "LD",
+        "label": "LDV",
+        "isCurrent": true
+      },
+      {
+        "code": "2H",
+        "label": "Leapmotor",
+        "isCurrent": true
+      },
+      {
+        "code": "LX",
+        "label": "Lexus",
+        "isCurrent": true
+      },
+      {
+        "code": "LO",
+        "label": "Lotus",
+        "isCurrent": true
+      },
+      {
+        "code": "MH",
+        "label": "Mahindra",
+        "isCurrent": true
+      },
+      {
+        "code": "MS",
+        "label": "Maserati",
+        "isCurrent": true
+      },
+      {
+        "code": "MZ",
+        "label": "Mazda",
+        "isCurrent": true
+      },
+      {
+        "code": "MC",
+        "label": "McLaren",
+        "isCurrent": true
+      },
+      {
+        "code": "MA",
+        "label": "Mercedes-AMG",
+        "isCurrent": true
+      },
+      {
+        "code": "MB",
+        "label": "Mercedes-Benz",
+        "isCurrent": true
+      },
+      {
+        "code": "MM",
+        "label": "Mercedes-Maybach",
+        "isCurrent": true
+      },
+      {
+        "code": "MG",
+        "label": "MG",
+        "isCurrent": true
+      },
+      {
+        "code": "MI",
+        "label": "Mini",
+        "isCurrent": true
+      },
+      {
+        "code": "MT",
+        "label": "Mitsubishi",
+        "isCurrent": true
+      },
+      {
+        "code": "MO",
+        "label": "Morgan",
+        "isCurrent": true
+      },
+      {
+        "code": "NI",
+        "label": "Nissan",
+        "isCurrent": true
+      },
+      {
+        "code": "PE",
+        "label": "Peugeot",
+        "isCurrent": true
+      },
+      {
+        "code": "PL",
+        "label": "Polestar",
+        "isCurrent": true
+      },
+      {
+        "code": "PO",
+        "label": "Porsche",
+        "isCurrent": true
+      },
+      {
+        "code": "RA",
+        "label": "RAM",
+        "isCurrent": true
+      },
+      {
+        "code": "RE",
+        "label": "Renault",
+        "isCurrent": true
+      },
+      {
+        "code": "21",
+        "label": "Riddara",
+        "isCurrent": true
+      },
+      {
+        "code": "HQ",
+        "label": "Rivian",
+        "isCurrent": true
+      },
+      {
+        "code": "RO",
+        "label": "Rolls-Royce",
+        "isCurrent": true
+      },
+      {
+        "code": "SK",
+        "label": "Skoda",
+        "isCurrent": true
+      },
+      {
+        "code": "D7",
+        "label": "Smart",
+        "isCurrent": true
+      },
+      {
+        "code": "SS",
+        "label": "SsangYong",
+        "isCurrent": true
+      },
+      {
+        "code": "SU",
+        "label": "Subaru",
+        "isCurrent": true
+      },
+      {
+        "code": "SZ",
+        "label": "Suzuki",
+        "isCurrent": true
+      },
+      {
+        "code": "TA",
+        "label": "Tata",
+        "isCurrent": true
+      },
+      {
+        "code": "TE",
+        "label": "Tesla",
+        "isCurrent": true
+      },
+      {
+        "code": "TS3",
+        "label": "Test 3",
+        "isCurrent": false
+      },
+      {
+        "code": "T33",
+        "label": "Test 33",
+        "isCurrent": true
+      },
+      {
+        "code": "TS5",
+        "label": "Test5",
+        "isCurrent": true
+      },
+      {
+        "code": "T6",
+        "label": "Test6",
+        "isCurrent": true
+      },
+      {
+        "code": "T69",
+        "label": "Test 69",
+        "isCurrent": true
+      },
+      {
+        "code": "T70",
+        "label": "Test70",
+        "isCurrent": true
+      },
+      {
+        "code": "T78",
+        "label": "Test78",
+        "isCurrent": true
+      },
+      {
+        "code": "T7",
+        "label": "Test7a",
+        "isCurrent": true
+      },
+      {
+        "code": "T80",
+        "label": "Test 80",
+        "isCurrent": false
+      },
+      {
+        "code": "TST",
+        "label": "Testing",
+        "isCurrent": false
+      },
+      {
+        "code": "TO",
+        "label": "Toyota",
+        "isCurrent": true
+      },
+      {
+        "code": "VW",
+        "label": "Volkswagen",
+        "isCurrent": true
+      },
+      {
+        "code": "VO",
+        "label": "Volvo",
+        "isCurrent": true
+      },
+      {
+        "code": "SI",
+        "label": "Xpeng",
+        "isCurrent": true
+      },
+      {
+        "code": "ZN",
+        "label": "Zeekr",
+        "isCurrent": true
+      }
+    ]
+  }

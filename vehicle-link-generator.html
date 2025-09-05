@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Link Generator - Vehicle Differentiator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .generator-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .form-section {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+        }
+        
+        .form-section h2 {
+            color: var(--brand-red);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .form-group label {
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        .form-input,
+        .form-select {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            background: white;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+        
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--brand-red);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+        
+        .form-input:disabled,
+        .form-select:disabled {
+            background: var(--background-light);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--brand-red);
+        }
+        
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+        
+        .generate-button {
+            background: var(--brand-red);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: var(--border-radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0 auto;
+        }
+        
+        .generate-button:hover {
+            background: var(--brand-red-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.3);
+        }
+        
+        .generate-button:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .url-display {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+        
+        .url-display.show {
+            display: block;
+        }
+        
+        .url-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .url-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .copy-button {
+            background: var(--brand-red);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .copy-button:hover {
+            background: var(--brand-red-dark);
+            transform: translateY(-1px);
+        }
+        
+        .url-content {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 1rem;
+            border-radius: var(--border-radius-sm);
+            word-break: break-all;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            line-height: 1.5;
+        }
+        
+        .url-params {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--background-light);
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--border-color);
+        }
+        
+        .url-params h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        .param-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        .param-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .param-item:last-child {
+            border-bottom: none;
+        }
+        
+        .param-name {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .param-value {
+            color: var(--brand-red);
+            font-weight: 500;
+        }
+        
+        .loading-message {
+            text-align: center;
+            padding: 1rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        
+        .error-message {
+            background: var(--brand-red-light);
+            border: 1px solid var(--brand-red);
+            border-radius: var(--border-radius-sm);
+            padding: 1rem;
+            color: var(--brand-red);
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .url-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .param-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Vehicle Link Generator</h1>
+            <nav class="page-navigation">
+                <a href="index.html" class="nav-link">← Back to Main</a>
+                <a href="comparison.html" class="nav-link">Columnar Comparison →</a>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <div class="generator-container">
+                <div class="form-section">
+                    <h2>Generate Vehicle API Link</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                        Configure parameters to generate a custom vehicle data API link. Data source is set to "jato" and view to "full" by default.
+                    </p>
+                    
+                    <form id="vehicle-link-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="make-code">Make Code *</label>
+                                <select id="make-code" class="form-select" required>
+                                    <option value="">Select a make...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="model-code">Model Code *</label>
+                                <select id="model-code" class="form-select" required disabled>
+                                    <option value="">Select a make first...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="model-year">Model Year</label>
+                                <input type="number" id="model-year" class="form-input" 
+                                       min="1990" max="2030" value="2024" placeholder="e.g., 2024">
+                            </div>
+                            
+                            <div class="form-group">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="include-year" checked>
+                                    <label for="include-year">Include model year in URL</label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="page">Page</label>
+                                <input type="number" id="page" class="form-input" 
+                                       min="1" value="1" placeholder="e.g., 1">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="limit">Limit</label>
+                                <input type="number" id="limit" class="form-input" 
+                                       min="1" max="100" value="10" placeholder="e.g., 10">
+                            </div>
+                            
+                            <div class="form-group">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="is-current" checked>
+                                    <label for="is-current">Current models only</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="error-message" id="error-message">
+                            Please fill in all required fields.
+                        </div>
+                        
+                        <button type="submit" class="generate-button" id="generate-button">
+                            <span>🔗</span>
+                            Generate Link
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="url-display" id="url-display">
+                    <div class="url-header">
+                        <h3 class="url-title">Generated API Link</h3>
+                        <button class="copy-button" id="copy-button">
+                            <span>📋</span>
+                            Copy Link
+                        </button>
+                    </div>
+                    <div class="url-content" id="url-content"></div>
+                    <div class="url-params" id="url-params">
+                        <h4>URL Parameters</h4>
+                        <div class="param-list" id="param-list"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2024 Vehicle Comparison Tool. Built with modern web technologies.</p>
+        </footer>
+    </div>
+
+    <script>
+        let makesData = [];
+        let modelCodesData = {};
+
+        // Load makes data
+        async function loadMakesData() {
+            try {
+                const response = await fetch('data/makeCodes.json');
+                const data = await response.json();
+                makesData = data.data;
+                populateMakeSelect();
+            } catch (error) {
+                console.error('Error loading makes data:', error);
+                showError('Could not load makes data. Please refresh the page.');
+            }
+        }
+
+        // Populate make select
+        function populateMakeSelect() {
+            const makeSelect = document.getElementById('make-code');
+            makeSelect.innerHTML = '<option value="">Select a make...</option>';
+            
+            makesData.forEach(make => {
+                const option = document.createElement('option');
+                option.value = make.code;
+                option.textContent = `${make.label} (${make.code})`;
+                option.dataset.isCurrent = make.isCurrent;
+                makeSelect.appendChild(option);
+            });
+        }
+
+        // Load model codes for selected make
+        async function loadModelCodes(makeCode) {
+            if (!makeCode) {
+                const modelSelect = document.getElementById('model-code');
+                modelSelect.innerHTML = '<option value="">Select a make first...</option>';
+                modelSelect.disabled = true;
+                return;
+            }
+
+            try {
+                const response = await fetch(`data/modelCodes/${makeCode.toLowerCase()}.json`);
+                const data = await response.json();
+                modelCodesData[makeCode] = data.data;
+                populateModelSelect(makeCode);
+            } catch (error) {
+                console.error(`Error loading model codes for ${makeCode}:`, error);
+                const modelSelect = document.getElementById('model-code');
+                modelSelect.innerHTML = '<option value="">No models available</option>';
+                modelSelect.disabled = true;
+            }
+        }
+
+        // Populate model select
+        function populateModelSelect(makeCode) {
+            const modelSelect = document.getElementById('model-code');
+            const models = modelCodesData[makeCode] || [];
+            
+            modelSelect.innerHTML = '<option value="">Select a model...</option>';
+            modelSelect.disabled = false;
+            
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.code;
+                option.textContent = `${model.labelFull} (${model.code})`;
+                option.dataset.isCurrent = model.isCurrent;
+                modelSelect.appendChild(option);
+            });
+        }
+
+        // Generate URL
+        function generateURL() {
+            const makeCode = document.getElementById('make-code').value;
+            const modelCode = document.getElementById('model-code').value;
+            const modelYear = document.getElementById('model-year').value;
+            const includeYear = document.getElementById('include-year').checked;
+            const isCurrent = document.getElementById('is-current').checked;
+            const page = document.getElementById('page').value;
+            const limit = document.getElementById('limit').value;
+
+            // Validate required fields
+            if (!makeCode || !modelCode) {
+                showError('Please fill in all required fields (marked with *)');
+                return;
+            }
+
+            // Hardcoded values
+            const dataSource = 'jato';
+            const view = 'full';
+
+            // Build URL
+            const baseURL = 'https://vehicle-data.beta.dev-syd.carexpert.com.au/v2/vehicles';
+            const params = new URLSearchParams();
+            
+            params.append('data_source', dataSource);
+            params.append('view', view);
+            params.append('make_code', makeCode);
+            params.append('model_code', modelCode);
+            
+            if (includeYear && modelYear) {
+                params.append('model_year', modelYear);
+            }
+            params.append('is_current', isCurrent.toString());
+            if (page) params.append('page', page);
+            if (limit) params.append('limit', limit);
+
+            const fullURL = `${baseURL}?${params.toString()}`;
+            
+            // Display URL
+            displayURL(fullURL, {
+                data_source: dataSource,
+                view: view,
+                make_code: makeCode,
+                model_code: modelCode,
+                model_year: includeYear ? (modelYear || 'Not specified') : 'Omitted',
+                is_current: isCurrent.toString(),
+                page: page || '1',
+                limit: limit || '10'
+            });
+        }
+
+        // Display generated URL
+        function displayURL(url, params) {
+            const urlDisplay = document.getElementById('url-display');
+            const urlContent = document.getElementById('url-content');
+            const paramList = document.getElementById('param-list');
+            
+            urlContent.textContent = url;
+            
+            // Display parameters
+            paramList.innerHTML = Object.entries(params)
+                .map(([key, value]) => `
+                    <div class="param-item">
+                        <span class="param-name">${key.replace('_', ' ').toUpperCase()}</span>
+                        <span class="param-value">${value}</span>
+                    </div>
+                `).join('');
+            
+            urlDisplay.classList.add('show');
+            urlDisplay.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Copy URL to clipboard
+        async function copyToClipboard() {
+            const urlContent = document.getElementById('url-content');
+            const url = urlContent.textContent;
+            
+            try {
+                await navigator.clipboard.writeText(url);
+                const copyButton = document.getElementById('copy-button');
+                const originalText = copyButton.innerHTML;
+                copyButton.innerHTML = '<span>✅</span> Copied!';
+                copyButton.style.background = 'var(--accent-green)';
+                
+                setTimeout(() => {
+                    copyButton.innerHTML = originalText;
+                    copyButton.style.background = 'var(--brand-red)';
+                }, 2000);
+            } catch (error) {
+                console.error('Failed to copy URL:', error);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 5000);
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMakesData();
+
+            // Make selection change
+            document.getElementById('make-code').addEventListener('change', function() {
+                const makeCode = this.value;
+                loadModelCodes(makeCode);
+            });
+
+            // Form submission
+            document.getElementById('vehicle-link-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                generateURL();
+            });
+
+            // Copy button
+            document.getElementById('copy-button').addEventListener('click', copyToClipboard);
+
+            // Clear error on input change
+            document.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('change', function() {
+                    document.getElementById('error-message').classList.remove('show');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

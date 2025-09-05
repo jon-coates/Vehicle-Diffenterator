@@ -417,9 +417,9 @@ class VehicleColumnarComparison {
         }
 
         // Create the Ford Escape style layout
-        let comparisonHTML = '<div class="ford-escape-layout">';
+        let comparisonHTML = '';
         
-        // Main title
+        // Main title - outside of scrollable container
         const firstVehicle = sortedVehicles[0];
         comparisonHTML += `
             <div class="main-title">
@@ -428,57 +428,46 @@ class VehicleColumnarComparison {
             </div>
         `;
         
-        // Three column layout
-        comparisonHTML += '<div class="three-column-layout">';
+        // Scrollable content container
+        comparisonHTML += '<div class="ford-escape-layout">';
         
-        // Column 1: First vehicle (base)
-        const baseVehicle = sortedVehicles[0];
-        comparisonHTML += `
-            <div class="spec-column">
-                <h2 class="column-header">${baseVehicle.trim}</h2>
-                ${this.renderVehicleSpecs(baseVehicle, filteredSpecs)}
-            </div>
-        `;
+        // Dynamic layout based on number of vehicles
+        const layoutClass = sortedVehicles.length > 3 ? 'multi-vehicle-layout' : 'three-column-layout';
+        console.log(`Rendering ${sortedVehicles.length} vehicles with layout class: ${layoutClass}`);
+        comparisonHTML += `<div class="${layoutClass}">`;
         
-        // Column 2: Second vehicle
-        if (sortedVehicles.length > 1) {
-            const secondVehicle = sortedVehicles[1];
-            const addsToBase = this.getAddsToPrevious(baseVehicle, secondVehicle, filteredSpecs);
-            const removesFromBase = this.getRemovesFromPrevious(baseVehicle, secondVehicle, filteredSpecs);
-            comparisonHTML += `
-                <div class="spec-column">
-                    <h2 class="column-header">${secondVehicle.trim}</h2>
-                    <div class="adds-section">
-                        <h3 class="section-title">Adds to ${baseVehicle.trim}:</h3>
-                        ${this.renderAddsSpecs(addsToBase)}
+        // Render all vehicles
+        sortedVehicles.forEach((vehicle, index) => {
+            if (index === 0) {
+                // First vehicle (base) - show full specs
+                comparisonHTML += `
+                    <div class="spec-column">
+                        <h2 class="column-header">${vehicle.trim}</h2>
+                        ${vehicle.versionName ? `<div class="column-subheader">${vehicle.versionName}</div>` : ''}
+                        ${this.renderVehicleSpecs(vehicle, filteredSpecs)}
                     </div>
-                    <div class="removes-section">
-                        <h3 class="section-title">Removes from ${baseVehicle.trim}:</h3>
-                        ${this.renderRemovesSpecs(removesFromBase)}
+                `;
+            } else {
+                // Subsequent vehicles - show adds/removes compared to previous vehicle
+                const previousVehicle = sortedVehicles[index - 1];
+                const addsToPrevious = this.getAddsToPrevious(previousVehicle, vehicle, filteredSpecs);
+                const removesFromPrevious = this.getRemovesFromPrevious(previousVehicle, vehicle, filteredSpecs);
+                comparisonHTML += `
+                    <div class="spec-column">
+                        <h2 class="column-header">${vehicle.trim}</h2>
+                        ${vehicle.versionName ? `<div class="column-subheader">${vehicle.versionName}</div>` : ''}
+                        <div class="adds-section">
+                            <h3 class="section-title">Adds to ${previousVehicle.trim}:</h3>
+                            ${this.renderAddsSpecs(addsToPrevious)}
+                        </div>
+                        <div class="removes-section">
+                            <h3 class="section-title">Removes from ${previousVehicle.trim}:</h3>
+                            ${this.renderRemovesSpecs(removesFromPrevious)}
+                        </div>
                     </div>
-                </div>
-            `;
-        }
-        
-        // Column 3: Third vehicle
-        if (sortedVehicles.length > 2) {
-            const thirdVehicle = sortedVehicles[2];
-            const addsToSecond = this.getAddsToPrevious(sortedVehicles[1], thirdVehicle, filteredSpecs);
-            const removesFromSecond = this.getRemovesFromPrevious(sortedVehicles[1], thirdVehicle, filteredSpecs);
-            comparisonHTML += `
-                <div class="spec-column">
-                    <h2 class="column-header">${thirdVehicle.trim}</h2>
-                    <div class="adds-section">
-                        <h3 class="section-title">Adds to ${sortedVehicles[1].trim}:</h3>
-                        ${this.renderAddsSpecs(addsToSecond)}
-                    </div>
-                    <div class="removes-section">
-                        <h3 class="section-title">Removes from ${sortedVehicles[1].trim}:</h3>
-                        ${this.renderRemovesSpecs(removesFromSecond)}
-                    </div>
-                </div>
-            `;
-        }
+                `;
+            }
+        });
         
         comparisonHTML += '</div></div>';
         
