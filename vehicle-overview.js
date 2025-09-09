@@ -357,7 +357,7 @@ class VehicleOverview {
         
         // Get relevant data based on category and point
         const data = this.getCategoryData(categoryName, pointName, vehiclesToAnalyze);
-        content.innerHTML = this.formatCategoryData(data, vehiclesToAnalyze.length);
+        content.innerHTML = this.formatCategoryData(data, vehiclesToAnalyze.length, categoryName, pointName);
 
         point.appendChild(title);
         point.appendChild(content);
@@ -378,11 +378,11 @@ class VehicleOverview {
                         data.engineCylinders = this.getUniqueValues(vehiclesToAnalyze, 'engineNumberOfCylinders');
                         data.engineConfiguration = this.getUniqueValues(vehiclesToAnalyze, 'engineConfiguration');
                         data.powertrainType = this.getUniqueValues(vehiclesToAnalyze, 'powertrainType');
+                        data.fuelType = this.getUniqueValues(vehiclesToAnalyze, 'fuelType');
+                        data.compressor = this.getUniqueValues(vehiclesToAnalyze, 'compressor');
                         break;
                     case 'Transmission':
-                        data.transmissionType = this.getUniqueValues(vehiclesToAnalyze, 'transmissionType');
-                        data.transmissionSpeeds = this.getUniqueValues(vehiclesToAnalyze, 'transmissionNumberOfSpeeds');
-                        data.transmissionDescription = this.getUniqueValues(vehiclesToAnalyze, 'transmissionDescription');
+                        data.transmissionDescription = this.generateTransmissionDescription(vehiclesToAnalyze);
                         break;
                     case 'Fuel Economy':
                         data.fuelType = this.getUniqueValues(vehiclesToAnalyze, 'fuelType');
@@ -564,9 +564,19 @@ class VehicleOverview {
     }
 
 
-    formatCategoryData(data, vehicleCount = 1) {
+    formatCategoryData(data, vehicleCount = 1, categoryName = '', pointName = '') {
         if (!data || Object.keys(data).length === 0) {
             return '<span style="color: var(--text-muted); font-style: italic;">No data available</span>';
+        }
+
+        // Special formatting for Engine Overview
+        if (categoryName === 'Powertrain & Performance' && pointName === 'Engine Overview') {
+            return this.formatEngineOverviewSentence(data, vehicleCount);
+        }
+
+        // Special formatting for Transmission
+        if (categoryName === 'Powertrain & Performance' && pointName === 'Transmission') {
+            return this.formatTransmissionDescription(data, vehicleCount);
         }
 
         let html = '<ul style="margin: 0; padding-left: 1.2rem;">';
@@ -595,6 +605,222 @@ class VehicleOverview {
         return html;
     }
 
+    formatTransmissionDescription(data, vehicleCount = 1) {
+        const description = data.transmissionDescription;
+        
+        if (!description || description === 'No transmission data available') {
+            return '<span style="color: var(--text-muted); font-style: italic;">No transmission data available</span>';
+        }
+        
+        // Add vehicle count note if multiple vehicles
+        let html = `<p style="margin: 0; line-height: 1.4;">${description}</p>`;
+        if (vehicleCount > 1) {
+            html += `<p style="color: var(--text-muted); font-style: italic; font-size: 0.9em; margin: 0.5rem 0 0 0;">Based on ${vehicleCount} vehicles</p>`;
+        }
+        
+        return html;
+    }
+
+    formatEngineOverviewSentence(data, vehicleCount = 1) {
+        // Helper function to ensure we're working with arrays
+        const ensureArray = (value) => Array.isArray(value) ? value : (value ? [value] : []);
+        
+        // Get all vehicle data arrays
+        const liters = ensureArray(data.engineLiters);
+        const cylinders = ensureArray(data.engineCylinders);
+        const configurations = ensureArray(data.engineConfiguration);
+        const powertrainTypes = ensureArray(data.powertrainType);
+        const fuelTypes = ensureArray(data.fuelType);
+        const compressors = ensureArray(data.compressor);
+        
+        // Create engine options array
+        const engineOptions = [];
+        
+        // Process each engine option
+        for (let i = 0; i < Math.max(liters.length, powertrainTypes.length); i++) {
+            const liter = liters[i];
+            const cylinder = cylinders[i];
+            const config = configurations[i];
+            const powertrainType = powertrainTypes[i];
+            const fuelType = fuelTypes[i];
+            const compressor = compressors[i];
+            
+            // Skip if no displacement and not electric
+            if (!liter && !this.isElectricPowertrain(powertrainType)) {
+                continue;
+            }
+            
+            const option = this.createEngineOption(liter, cylinder, config, powertrainType, fuelType, compressor);
+            if (option) {
+                engineOptions.push(option);
+            }
+        }
+        
+        // Deduplicate and sort options
+        const uniqueOptions = this.deduplicateAndSortOptions(engineOptions);
+        
+        // Generate sentence
+        const sentence = this.generateEngineSentence(uniqueOptions);
+        
+        // Add vehicle count note if multiple vehicles
+        let html = `<p style="margin: 0; line-height: 1.4;">${sentence}</p>`;
+        if (vehicleCount > 1) {
+            html += `<p style="color: var(--text-muted); font-style: italic; font-size: 0.9em; margin: 0.5rem 0 0 0;">Based on ${vehicleCount} vehicles</p>`;
+        }
+        
+        return html;
+    }
+    
+    isElectricPowertrain(powertrainType) {
+        if (!powertrainType) return false;
+        const type = powertrainType.toLowerCase();
+        return type.includes('battery electric') && !type.includes('hybrid');
+    }
+    
+    isHybridPowertrain(powertrainType) {
+        if (!powertrainType) return false;
+        const type = powertrainType.toLowerCase();
+        return type.includes('hybrid');
+    }
+    
+    createEngineOption(liter, cylinder, config, powertrainType, fuelType, compressor) {
+        const powertrain = powertrainType ? powertrainType.toLowerCase() : '';
+        
+        // Handle electric powertrains
+        if (this.isElectricPowertrain(powertrain)) {
+            return {
+                type: 'electric',
+                description: 'battery-electric powertrain',
+                sortOrder: 1
+            };
+        }
+        
+        // Handle hybrid powertrains
+        if (this.isHybridPowertrain(powertrain)) {
+            // If engine details exist, describe them then append "hybrid"
+            if (liter) {
+                const displacement = this.formatDisplacement(liter);
+                const cylinderDesc = this.formatCylinderDescription(cylinder, config);
+                const compressorDesc = this.formatCompressor(compressor);
+                
+                let description = `${displacement}${cylinderDesc}${compressorDesc} hybrid`;
+                return {
+                    type: 'hybrid',
+                    description: description,
+                    sortOrder: 2
+                };
+            } else {
+                // Fall back to generic hybrid powertrain if no engine details
+                return {
+                    type: 'hybrid',
+                    description: 'hybrid powertrain',
+                    sortOrder: 2
+                };
+            }
+        }
+        
+        // Handle combustion engines
+        if (!liter) return null;
+        
+        const displacement = this.formatDisplacement(liter);
+        const cylinderDesc = this.formatCylinderDescription(cylinder, config);
+        const compressorDesc = this.formatCompressor(compressor);
+        const fuelDesc = this.formatFuelType(fuelType);
+        
+        let description = `${displacement}${fuelDesc}${cylinderDesc}${compressorDesc} engine`;
+        return {
+            type: 'combustion',
+            description: description,
+            sortOrder: 3
+        };
+    }
+    
+    formatDisplacement(liter) {
+        if (!liter) return '';
+        const num = parseFloat(liter);
+        return `${num}-litre `;
+    }
+    
+    formatCylinderDescription(cylinder, config) {
+        if (!cylinder) return '';
+        
+        let configText = '';
+        if (config) {
+            const configLower = config.toLowerCase();
+            if (configLower === 'in-line') {
+                configText = 'inline-';
+            } else if (configLower === 'v') {
+                configText = 'V';
+            } else if (configLower === 'flat') {
+                configText = 'flat-';
+            } else {
+                configText = configLower.replace('-', '-') + '-';
+            }
+        }
+        
+        return configText + cylinder;
+    }
+    
+    formatCompressor(compressor) {
+        if (!compressor) return '';
+        
+        const compLower = compressor.toLowerCase();
+        if (compLower === 'turbo') {
+            return ' turbo';
+        } else if (compLower === 'supercharger') {
+            return ' supercharged';
+        }
+        return '';
+    }
+    
+    formatFuelType(fuelType) {
+        if (!fuelType) return '';
+        
+        const fuelLower = fuelType.toLowerCase();
+        if (fuelLower.includes('petrol') || fuelLower.includes('unleaded')) {
+            return 'petrol ';
+        } else if (fuelLower.includes('diesel')) {
+            return 'diesel ';
+        }
+        return '';
+    }
+    
+    deduplicateAndSortOptions(options) {
+        // Remove duplicates based on description
+        const unique = options.filter((option, index, self) => 
+            index === self.findIndex(o => o.description === option.description)
+        );
+        
+        // Sort by type (electric → hybrid → combustion)
+        return unique.sort((a, b) => a.sortOrder - b.sortOrder);
+    }
+    
+    generateEngineSentence(options) {
+        if (options.length === 0) {
+            return 'No engine information available.';
+        }
+        
+        if (options.length === 1) {
+            const option = options[0];
+            // Use "as a" for specific descriptions, "as" for generic powertrain descriptions
+            if (option.description.includes('powertrain')) {
+                return `Offered as a ${option.description}.`;
+            } else {
+                return `Offered as a ${option.description}.`;
+            }
+        }
+        
+        if (options.length === 2) {
+            return `Available with a ${options[0].description} or a ${options[1].description}.`;
+        }
+        
+        // Three or more options
+        const firstOptions = options.slice(0, -1).map(opt => `a ${opt.description}`);
+        const lastOption = `a ${options[options.length - 1].description}`;
+        
+        return `Available with ${firstOptions.join(', ')}, or ${lastOption}.`;
+    }
+
     formatKey(key) {
         // Convert camelCase to readable format
         return key
@@ -617,6 +843,228 @@ class VehicleOverview {
             return value.join(', ');
         }
         return String(value);
+    }
+
+    generateTransmissionDescription(vehicles) {
+        if (!vehicles || vehicles.length === 0) {
+            return 'No transmission data available';
+        }
+
+        // Extract transmission options from all vehicles
+        const transmissionOptions = vehicles.map(vehicle => {
+            const v = vehicle.vehicle;
+            return this.createTransmissionOption(v);
+        }).filter(option => option !== null);
+
+        // Deduplicate and sort options
+        const uniqueOptions = this.deduplicateTransmissionOptions(transmissionOptions);
+        
+        if (uniqueOptions.length === 0) {
+            return 'No transmission data available';
+        }
+
+        // Generate sentence
+        return this.generateTransmissionSentence(uniqueOptions);
+    }
+
+    createTransmissionOption(vehicle) {
+        // Access transmission data from nested transmission object or fallback to vehicle level
+        const transmission = vehicle.transmission || {};
+        const type = transmission.transmissionType || vehicle.transmissionType;
+        const speeds = transmission.transmissionNumberOfSpeeds || vehicle.transmissionNumberOfSpeeds;
+        const description = transmission.transmissionDescription || vehicle.transmissionDescription || '';
+        const manufacturer = transmission.transmissionManufacturerName || vehicle.transmissionManufacturerName || '';
+        const drivenWheels = transmission.driveDrivenWheels || vehicle.driveDrivenWheels || vehicle.drivenWheels;
+        const fourWheelDriveType = transmission.driveFourWheelDriveType || vehicle.driveFourWheelDriveType;
+        const lowHighGearRanges = transmission.transmissionLowHighGearRanges || vehicle.transmissionLowHighGearRanges;
+        const descentControl = transmission.driveDescentControlSystem || vehicle.driveDescentControlSystem;
+        const manualMode = description.toLowerCase().includes('manual mode');
+        const paddleShifters = description.toLowerCase().includes('paddle');
+
+        // Determine core transmission type
+        let coreType = this.determineCoreType(speeds, description, type, manufacturer);
+        if (!coreType) return null;
+
+        // Add speed information
+        let speedInfo = this.addSpeedInfo(coreType, speeds, description);
+        
+        // Add driveline information
+        let drivelineInfo = this.addDrivelineInfo(drivenWheels, fourWheelDriveType);
+        
+        // Add off-road features
+        let offRoadFeatures = this.addOffRoadFeatures(lowHighGearRanges, descentControl);
+        
+        // Add manual mode and paddles
+        let manualFeatures = this.addManualFeatures(manualMode, paddleShifters);
+
+        // Combine all parts - put speed before transmission type
+        let option = speedInfo + coreType;
+        if (drivelineInfo) option += ' (' + drivelineInfo + ')';
+        if (offRoadFeatures) option += ', ' + offRoadFeatures;
+        if (manualFeatures) option += ', ' + manualFeatures;
+
+        return {
+            description: option,
+            sortOrder: this.getTransmissionSortOrder(coreType)
+        };
+    }
+
+    determineCoreType(speeds, description, type, manufacturer) {
+        const desc = description.toLowerCase();
+        const manuf = manufacturer.toLowerCase();
+
+        // Single speed (EVs)
+        if (speeds === '1') {
+            return 'single-speed';
+        }
+
+        // Dual clutch
+        if (desc.includes('dual clutch') || desc.includes('dct')) {
+            return 'dual-clutch';
+        }
+
+        // CVT variants
+        if (desc.includes('continuously variable') || speeds === 'Variable') {
+            if (manuf.includes('ecvt') || manuf.includes('e-cvt') || manuf.includes('Ecvt')) {
+                return 'e-CVT';
+            }
+            return 'CVT';
+        }
+
+        // Manual
+        if (type === 'Manual') {
+            return 'manual';
+        }
+
+        // Automatic
+        if (type === 'Automatic') {
+            return 'automatic';
+        }
+
+        return null;
+    }
+
+    addSpeedInfo(coreType, speeds, description) {
+        // Don't add speed info for single-speed, CVT, or e-CVT unless simulated gears
+        if (coreType === 'single-speed' || coreType === 'CVT' || coreType === 'e-CVT') {
+            return '';
+        }
+
+        // Add speed info for manuals and automatics if > 1 speed
+        if ((coreType === 'manual' || coreType === 'automatic' || coreType === 'dual-clutch') && speeds && speeds !== '1') {
+            return `${speeds}-speed `;
+        }
+
+        return '';
+    }
+
+    addDrivelineInfo(drivenWheels, fourWheelDriveType) {
+        if (!drivenWheels) return '';
+
+        let driveline = '';
+        
+        // Map driven wheels
+        switch (drivenWheels.toLowerCase()) {
+            case 'front':
+                driveline = 'FWD';
+                break;
+            case 'rear':
+                driveline = 'RWD';
+                break;
+            case '4x4':
+            case 'awd':
+                driveline = '4×4';
+                break;
+            default:
+                driveline = drivenWheels;
+        }
+
+        // Add 4WD type if present
+        if (fourWheelDriveType && fourWheelDriveType.toLowerCase() !== 'no') {
+            const type = fourWheelDriveType.toLowerCase();
+            if (type.includes('full') && type.includes('part')) {
+                driveline += ' (full- and part-time)';
+            } else if (type.includes('full')) {
+                driveline += ' (full-time)';
+            } else if (type.includes('part')) {
+                driveline += ' (part-time)';
+            } else {
+                driveline += ` (${fourWheelDriveType.toLowerCase()})`;
+            }
+        }
+
+        return driveline;
+    }
+
+    addOffRoadFeatures(lowHighGearRanges, descentControl) {
+        const features = [];
+
+        if (lowHighGearRanges && lowHighGearRanges.toLowerCase() === 'yes') {
+            features.push('low-range');
+        }
+
+        if (descentControl && descentControl.toLowerCase() === 'yes') {
+            features.push('hill-descent control');
+        }
+
+        return features.join(', ');
+    }
+
+    addManualFeatures(manualMode, paddleShifters) {
+        const features = [];
+
+        if (manualMode) {
+            features.push('manual mode');
+        }
+
+        if (paddleShifters) {
+            features.push('paddle shifters');
+        }
+
+        return features.join(', ');
+    }
+
+    getTransmissionSortOrder(coreType) {
+        const order = {
+            'single-speed': 1,
+            'CVT': 2,
+            'e-CVT': 2,
+            'dual-clutch': 3,
+            'automatic': 4,
+            'manual': 5
+        };
+        return order[coreType] || 6;
+    }
+
+    deduplicateTransmissionOptions(options) {
+        // Remove duplicates based on description
+        const unique = options.filter((option, index, self) => 
+            index === self.findIndex(o => o.description === option.description)
+        );
+
+        // Sort by type
+        return unique.sort((a, b) => a.sortOrder - b.sortOrder);
+    }
+
+    generateTransmissionSentence(options) {
+        if (options.length === 1) {
+            return this.capitaliseFirstLetter(options[0].description) + '.';
+        }
+
+        if (options.length === 2) {
+            return `Available with ${options[0].description} or ${options[1].description}.`;
+        }
+
+        // Three or more options
+        const firstOptions = options.slice(0, -1).map(opt => opt.description);
+        const lastOption = options[options.length - 1].description;
+        
+        return `Available with ${firstOptions.join(', ')}, or ${lastOption}.`;
+    }
+
+    capitaliseFirstLetter(str) {
+        if (!str || str.length === 0) return str;
+        return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
     showLoading() {
