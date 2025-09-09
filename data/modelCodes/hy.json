@@ -1,0 +1,118 @@
+{
+    "data": [
+      {
+        "code": "VE",
+        "labelShort": "Veloster",
+        "labelFull": "Hyundai Veloster",
+        "isCurrent": true
+      },
+      {
+        "code": "UF",
+        "labelShort": "i20",
+        "labelFull": "Hyundai i20",
+        "isCurrent": true
+      },
+      {
+        "code": "I4",
+        "labelShort": "i30",
+        "labelFull": "Hyundai i30",
+        "isCurrent": true
+      },
+      {
+        "code": "6R",
+        "labelShort": "IONIQ 5",
+        "labelFull": "Hyundai IONIQ 5",
+        "isCurrent": true
+      },
+      {
+        "code": "3W",
+        "labelShort": "Ioniq 6",
+        "labelFull": "Hyundai Ioniq 6",
+        "isCurrent": true
+      },
+      {
+        "code": "KO",
+        "labelShort": "Kona",
+        "labelFull": "Hyundai Kona",
+        "isCurrent": true
+      },
+      {
+        "code": "2S",
+        "labelShort": "Nexo",
+        "labelFull": "Hyundai Nexo",
+        "isCurrent": true
+      },
+      {
+        "code": "Z8",
+        "labelShort": "Palisade",
+        "labelFull": "Hyundai Palisade",
+        "isCurrent": true
+      },
+      {
+        "code": "SB",
+        "labelShort": "Santa Fe",
+        "labelFull": "Hyundai Santa Fe",
+        "isCurrent": true
+      },
+      {
+        "code": "SO",
+        "labelShort": "Sonata",
+        "labelFull": "Hyundai Sonata",
+        "isCurrent": true
+      },
+      {
+        "code": "YH",
+        "labelShort": "Staria",
+        "labelFull": "Hyundai Staria",
+        "isCurrent": true
+      },
+      {
+        "code": "TV",
+        "labelShort": "Tucson",
+        "labelFull": "Hyundai Tucson",
+        "isCurrent": true
+      },
+      {
+        "code": "VF",
+        "labelShort": "Venue",
+        "labelFull": "Hyundai Venue",
+        "isCurrent": true
+      },
+      {
+        "code": "EL",
+        "labelShort": "Elantra",
+        "labelFull": "Hyundai Elantra",
+        "isCurrent": true
+      },
+      {
+        "code": "IL",
+        "labelShort": "iLoad",
+        "labelFull": "Hyundai iLoad",
+        "isCurrent": true
+      },
+      {
+        "code": "IM",
+        "labelShort": "iMax",
+        "labelFull": "Hyundai iMax",
+        "isCurrent": true
+      },
+      {
+        "code": "LO",
+        "labelShort": "Inster",
+        "labelFull": "Hyundai Inster",
+        "isCurrent": true
+      },
+      {
+        "code": "IO",
+        "labelShort": "Ioniq",
+        "labelFull": "Hyundai Ioniq",
+        "isCurrent": true
+      },
+      {
+        "code": "8D",
+        "labelShort": "Ioniq 9",
+        "labelFull": "Hyundai Ioniq 9",
+        "isCurrent": true
+      }
+    ]
+  }

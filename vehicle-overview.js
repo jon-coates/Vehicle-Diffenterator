@@ -389,9 +389,8 @@ class VehicleOverview {
                         data.transmissionDescription = this.generateTransmissionDescription(vehiclesToAnalyze);
                         break;
                     case 'Fuel Economy':
-                        data.fuelType = this.getUniqueValues(vehiclesToAnalyze, 'fuelType');
-                        data.drivenWheels = this.getUniqueValues(vehiclesToAnalyze, 'drivenWheels');
-                        data.hasEvData = this.getUniqueValues(vehiclesToAnalyze, 'hasEvData');
+                        data.fuelConsumption = this.getFuelConsumptionData(vehiclesToAnalyze);
+                        data.electricRange = this.getElectricRangeData(vehiclesToAnalyze);
                         break;
                 }
                 break;
@@ -581,6 +580,11 @@ class VehicleOverview {
         // Special formatting for Transmission
         if (categoryName === 'Powertrain & Performance' && pointName === 'Transmission') {
             return this.formatTransmissionDescription(data, vehicleCount);
+        }
+
+        // Special formatting for Fuel Economy
+        if (categoryName === 'Powertrain & Performance' && pointName === 'Fuel Economy') {
+            return this.formatFuelEconomySentence(data, vehicleCount);
         }
 
         let html = '<ul style="margin: 0; padding-left: 1.2rem;">';
@@ -1098,6 +1102,70 @@ class VehicleOverview {
     capitaliseFirstLetter(str) {
         if (!str || str.length === 0) return str;
         return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    getFuelConsumptionData(vehicles) {
+        const fuelConsumptionValues = vehicles
+            .map(v => v.vehicle?.performance?.fuelConsumptionAdr8102CombinedL100km)
+            .filter(value => value !== null && value !== undefined && !isNaN(value));
+        
+        if (fuelConsumptionValues.length === 0) return null;
+        
+        const uniqueValues = [...new Set(fuelConsumptionValues)];
+        return uniqueValues.length === 1 ? uniqueValues[0] : uniqueValues;
+    }
+
+    getElectricRangeData(vehicles) {
+        const electricRangeValues = vehicles
+            .map(v => v.vehicle?.performance?.bevPureElectricRangeCombinedKm)
+            .filter(value => value !== null && value !== undefined && !isNaN(value));
+        
+        if (electricRangeValues.length === 0) return null;
+        
+        const uniqueValues = [...new Set(electricRangeValues)];
+        return uniqueValues.length === 1 ? uniqueValues[0] : uniqueValues;
+    }
+
+    formatFuelEconomySentence(data, vehicleCount = 1) {
+        const fuelConsumption = data.fuelConsumption;
+        const electricRange = data.electricRange;
+        
+        // If no data available
+        if (!fuelConsumption && !electricRange) {
+            return '<span style="color: var(--text-muted); font-style: italic;">No fuel economy data available</span>';
+        }
+        
+        const sentences = [];
+        
+        // Handle fuel consumption (ICE/Hybrid)
+        if (fuelConsumption) {
+            if (Array.isArray(fuelConsumption)) {
+                const min = Math.min(...fuelConsumption);
+                const max = Math.max(...fuelConsumption);
+                sentences.push(`Combined fuel consumption ranges from ${min} to ${max} L/100 km (ADR 81/02).`);
+            } else {
+                sentences.push(`Combined fuel consumption is ${fuelConsumption} L/100 km (ADR 81/02).`);
+            }
+        }
+        
+        // Handle electric range (EV)
+        if (electricRange) {
+            if (Array.isArray(electricRange)) {
+                const min = Math.min(...electricRange);
+                const max = Math.max(...electricRange);
+                sentences.push(`Provides a combined electric range of ${min}–${max} km.`);
+            } else {
+                sentences.push(`Provides a combined electric range of ${electricRange} km.`);
+            }
+        }
+        
+        // Add vehicle count note if multiple vehicles
+        let html = `<p style="margin: 0; line-height: 1.4;">${sentences.join(' ')}</p>`;
+        if (vehicleCount > 1) {
+            html += `<p style="color: var(--text-muted); font-style: italic; font-size: 0.9em; margin: 0.5rem 0 0 0;">Based on ${vehicleCount} vehicles</p>`;
+        }
+        
+        return html;
     }
 
     showLoading() {
