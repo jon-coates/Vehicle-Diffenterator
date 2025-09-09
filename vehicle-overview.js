@@ -380,6 +380,10 @@ class VehicleOverview {
                         data.powertrainType = this.getUniqueValues(vehiclesToAnalyze, 'powertrainType');
                         data.fuelType = this.getUniqueValues(vehiclesToAnalyze, 'fuelType');
                         data.compressor = this.getUniqueValues(vehiclesToAnalyze, 'compressor');
+                        data.powerMaximumPowerKw = this.getUniqueValues(vehiclesToAnalyze, 'powerMaximumPowerKw');
+                        data.powerMaximumTorqueNm = this.getUniqueValues(vehiclesToAnalyze, 'powerMaximumTorqueNm');
+                        data.powerMaximumPowerKwElectricMotor = this.getUniqueValues(vehiclesToAnalyze, 'powerMaximumPowerKwElectricMotor');
+                        data.powerMaximumTorqueNmElectricMotor = this.getUniqueValues(vehiclesToAnalyze, 'powerMaximumTorqueNmElectricMotor');
                         break;
                     case 'Transmission':
                         data.transmissionDescription = this.generateTransmissionDescription(vehiclesToAnalyze);
@@ -535,7 +539,7 @@ class VehicleOverview {
 
     getUniqueValues(vehicles, property) {
         const values = vehicles
-            .map(v => v.vehicle?.[property])
+            .map(v => v.vehicle?.[property] || v.vehicleGeneralInfo?.[property] || v.vehicle?.performance?.[property])
             .filter(value => value !== null && value !== undefined && value !== '');
         
         const uniqueValues = [...new Set(values)];
@@ -632,6 +636,10 @@ class VehicleOverview {
         const powertrainTypes = ensureArray(data.powertrainType);
         const fuelTypes = ensureArray(data.fuelType);
         const compressors = ensureArray(data.compressor);
+        const powerKw = ensureArray(data.powerMaximumPowerKw);
+        const torqueNm = ensureArray(data.powerMaximumTorqueNm);
+        const powerKwElectric = ensureArray(data.powerMaximumPowerKwElectricMotor);
+        const torqueNmElectric = ensureArray(data.powerMaximumTorqueNmElectricMotor);
         
         // Create engine options array
         const engineOptions = [];
@@ -644,13 +652,17 @@ class VehicleOverview {
             const powertrainType = powertrainTypes[i];
             const fuelType = fuelTypes[i];
             const compressor = compressors[i];
+            const power = powerKw[i];
+            const torque = torqueNm[i];
+            const powerElectric = powerKwElectric[i];
+            const torqueElectric = torqueNmElectric[i];
             
             // Skip if no displacement and not electric
             if (!liter && !this.isElectricPowertrain(powertrainType)) {
                 continue;
             }
             
-            const option = this.createEngineOption(liter, cylinder, config, powertrainType, fuelType, compressor);
+            const option = this.createEngineOption(liter, cylinder, config, powertrainType, fuelType, compressor, power, torque, powerElectric, torqueElectric);
             if (option) {
                 engineOptions.push(option);
             }
@@ -683,14 +695,15 @@ class VehicleOverview {
         return type.includes('hybrid');
     }
     
-    createEngineOption(liter, cylinder, config, powertrainType, fuelType, compressor) {
+    createEngineOption(liter, cylinder, config, powertrainType, fuelType, compressor, power, torque, powerElectric, torqueElectric) {
         const powertrain = powertrainType ? powertrainType.toLowerCase() : '';
         
         // Handle electric powertrains
         if (this.isElectricPowertrain(powertrain)) {
+            const powerInfo = this.formatPowerInfo(powerElectric, torqueElectric);
             return {
                 type: 'electric',
-                description: 'battery-electric powertrain',
+                description: `battery-electric powertrain${powerInfo}`,
                 sortOrder: 1
             };
         }
@@ -702,8 +715,9 @@ class VehicleOverview {
                 const displacement = this.formatDisplacement(liter);
                 const cylinderDesc = this.formatCylinderDescription(cylinder, config);
                 const compressorDesc = this.formatCompressor(compressor);
+                const powerInfo = this.formatPowerInfo(powerElectric, torqueElectric);
                 
-                let description = `${displacement}${cylinderDesc}${compressorDesc} hybrid`;
+                let description = `${displacement}${cylinderDesc}${compressorDesc} hybrid${powerInfo}`;
                 return {
                     type: 'hybrid',
                     description: description,
@@ -711,9 +725,10 @@ class VehicleOverview {
                 };
             } else {
                 // Fall back to generic hybrid powertrain if no engine details
+                const powerInfo = this.formatPowerInfo(powerElectric, torqueElectric);
                 return {
                     type: 'hybrid',
-                    description: 'hybrid powertrain',
+                    description: `hybrid powertrain${powerInfo}`,
                     sortOrder: 2
                 };
             }
@@ -726,8 +741,9 @@ class VehicleOverview {
         const cylinderDesc = this.formatCylinderDescription(cylinder, config);
         const compressorDesc = this.formatCompressor(compressor);
         const fuelDesc = this.formatFuelType(fuelType);
+        const powerInfo = this.formatPowerInfo(power, torque);
         
-        let description = `${displacement}${fuelDesc}${cylinderDesc}${compressorDesc} engine`;
+        let description = `${displacement}${fuelDesc}${cylinderDesc}${compressorDesc} engine${powerInfo}`;
         return {
             type: 'combustion',
             description: description,
@@ -782,6 +798,23 @@ class VehicleOverview {
         } else if (fuelLower.includes('diesel')) {
             return 'diesel ';
         }
+        return '';
+    }
+    
+    formatPowerInfo(power, torque) {
+        if (!power && !torque) return '';
+        
+        const powerKw = power ? parseFloat(power) : null;
+        const torqueNm = torque ? parseFloat(torque) : null;
+        
+        if (powerKw && torqueNm) {
+            return ` producing ${powerKw} kW and ${torqueNm} Nm`;
+        } else if (powerKw) {
+            return ` producing ${powerKw} kW`;
+        } else if (torqueNm) {
+            return ` producing ${torqueNm} Nm`;
+        }
+        
         return '';
     }
     
