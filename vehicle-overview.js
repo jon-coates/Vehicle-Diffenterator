@@ -341,6 +341,14 @@ class VehicleOverview {
         card.appendChild(header);
         card.appendChild(pointsContainer);
 
+        // Add summary paragraph for Powertrain & Performance
+        if (categoryName === 'Powertrain & Performance') {
+            const summary = this.createPowertrainSummary(vehiclesToAnalyze);
+            if (summary) {
+                card.appendChild(summary);
+            }
+        }
+
         return card;
     }
 
@@ -584,7 +592,7 @@ class VehicleOverview {
 
         // Special formatting for Fuel Economy
         if (categoryName === 'Powertrain & Performance' && pointName === 'Fuel Economy') {
-            return this.formatFuelEconomySentence(data, vehicleCount);
+            return this.formatFuelEconomyBulletList(data, vehicleCount);
         }
 
         let html = '<ul style="margin: 0; padding-left: 1.2rem;">';
@@ -1168,6 +1176,58 @@ class VehicleOverview {
         return html;
     }
 
+    formatFuelEconomyBulletList(data, vehicleCount = 1) {
+        const fuelConsumption = data.fuelConsumption;
+        const electricRange = data.electricRange;
+        
+        // If no data available
+        if (!fuelConsumption && !electricRange) {
+            return '<span style="color: var(--text-muted); font-style: italic;">No fuel economy data available</span>';
+        }
+        
+        let html = '<div style="margin: 0;">';
+        
+        // Handle fuel consumption (ICE/Hybrid)
+        if (fuelConsumption) {
+            if (Array.isArray(fuelConsumption)) {
+                const uniqueValues = [...new Set(fuelConsumption)].sort((a, b) => a - b);
+                if (uniqueValues.length === 1) {
+                    html += `<div><strong>Fuel Consumption:</strong> ${uniqueValues[0]} L/100 km (ADR 81/02)</div>`;
+                } else {
+                    const min = Math.min(...uniqueValues);
+                    const max = Math.max(...uniqueValues);
+                    html += `<div><strong>Fuel Consumption:</strong> ${min}–${max} L/100 km (ADR 81/02)</div>`;
+                }
+            } else {
+                html += `<div><strong>Fuel Consumption:</strong> ${fuelConsumption} L/100 km (ADR 81/02)</div>`;
+            }
+        }
+        
+        // Handle electric range (EV)
+        if (electricRange) {
+            if (Array.isArray(electricRange)) {
+                const uniqueValues = [...new Set(electricRange)].sort((a, b) => a - b);
+                if (uniqueValues.length === 1) {
+                    html += `<div><strong>Electric Range:</strong> ${uniqueValues[0]} km</div>`;
+                } else {
+                    const min = Math.min(...uniqueValues);
+                    const max = Math.max(...uniqueValues);
+                    html += `<div><strong>Electric Range:</strong> ${min}–${max} km</div>`;
+                }
+            } else {
+                html += `<div><strong>Electric Range:</strong> ${electricRange} km</div>`;
+            }
+        }
+        
+        // Add vehicle count note if multiple vehicles
+        if (vehicleCount > 1) {
+            html += `<div style="color: var(--text-muted); font-style: italic; margin-top: 0.5rem;">Based on ${vehicleCount} vehicles</div>`;
+        }
+        
+        html += '</div>';
+        return html;
+    }
+
     showLoading() {
         document.getElementById('loading-state').style.display = 'block';
         document.getElementById('error-state').style.display = 'none';
@@ -1195,6 +1255,164 @@ class VehicleOverview {
         document.getElementById('loading-state').style.display = 'none';
         document.getElementById('error-state').style.display = 'none';
         document.getElementById('no-data-state').style.display = 'block';
+    }
+
+    createPowertrainSummary(vehiclesToAnalyze) {
+        if (!vehiclesToAnalyze || vehiclesToAnalyze.length === 0) return null;
+
+        const summary = document.createElement('div');
+        summary.className = 'powertrain-summary';
+
+        const title = document.createElement('div');
+        title.className = 'summary-title';
+        title.textContent = 'Powertrain Overview';
+
+        const content = document.createElement('div');
+        content.className = 'summary-content';
+
+        // Generate comprehensive powertrain summary
+        const summaryText = this.generatePowertrainSummaryText(vehiclesToAnalyze);
+        content.innerHTML = summaryText;
+
+        summary.appendChild(title);
+        summary.appendChild(content);
+
+        return summary;
+    }
+
+    generatePowertrainSummaryText(vehiclesToAnalyze) {
+        if (!vehiclesToAnalyze || vehiclesToAnalyze.length === 0) {
+            return '<span style="color: var(--text-muted); font-style: italic;">No powertrain information available</span>';
+        }
+
+        // Extract vehicle information
+        const vehicleInfo = this.extractVehicleInfo(vehiclesToAnalyze);
+        const engineData = this.getCategoryData('Powertrain & Performance', 'Engine Overview', vehiclesToAnalyze);
+        const transmissionData = this.getCategoryData('Powertrain & Performance', 'Transmission', vehiclesToAnalyze);
+        const fuelData = this.getCategoryData('Powertrain & Performance', 'Fuel Economy', vehiclesToAnalyze);
+
+        // Generate flowing introductory paragraph
+        const introParagraph = this.createFlowingPowertrainIntro(vehicleInfo, engineData, transmissionData, fuelData, vehiclesToAnalyze.length);
+        
+        return introParagraph;
+    }
+
+    extractVehicleInfo(vehiclesToAnalyze) {
+        const firstVehicle = vehiclesToAnalyze[0]?.vehicle;
+        if (!firstVehicle) return {};
+
+        return {
+            modelYear: firstVehicle.modelYear || firstVehicle.vehicleGeneralInfo?.modelYear,
+            displayName: firstVehicle.displayName || firstVehicle.vehicleGeneralInfo?.displayName,
+            make: firstVehicle.make || firstVehicle.vehicleGeneralInfo?.make,
+            model: firstVehicle.model || firstVehicle.vehicleGeneralInfo?.model,
+            trim: firstVehicle.trim,
+            versionName: firstVehicle.versionName
+        };
+    }
+
+    createFlowingPowertrainIntro(vehicleInfo, engineData, transmissionData, fuelData, vehicleCount) {
+        // Start with year and display name
+        const year = vehicleInfo.modelYear || 'the';
+        const displayName = vehicleInfo.displayName || this.constructDisplayName(vehicleInfo);
+        
+        let intro = `The ${year} ${displayName}`;
+
+        // Add engine information
+        const engineDescription = this.getEngineDescription(engineData);
+        if (engineDescription) {
+            intro += ` features ${engineDescription}`;
+        }
+
+        // Add transmission information
+        const transmissionDescription = this.getTransmissionDescription(transmissionData);
+        if (transmissionDescription) {
+            intro += `, paired with ${transmissionDescription}`;
+        }
+
+        // Add fuel economy information
+        const fuelDescription = this.getFuelDescription(fuelData);
+        if (fuelDescription) {
+            intro += `. ${fuelDescription}`;
+        }
+
+
+        return intro;
+    }
+
+    constructDisplayName(vehicleInfo) {
+        const make = vehicleInfo.make || '';
+        const model = vehicleInfo.model || '';
+        let baseName = `${make} ${model}`.trim();
+        
+        // Add trim or variant based on current level
+        if (this.currentLevel === 'variant' && vehicleInfo.versionName) {
+            // For variant level, use the version name
+            baseName = vehicleInfo.versionName;
+        } else if (this.currentLevel === 'trim' && vehicleInfo.trim) {
+            // For trim level, add trim to base name
+            baseName = `${baseName} ${vehicleInfo.trim}`;
+        }
+        
+        return baseName || 'vehicle';
+    }
+
+    getEngineDescription(engineData) {
+        if (!engineData || Object.keys(engineData).length === 0) return null;
+
+        // Use existing engine logic but return a more natural description
+        const engineSummary = this.generateEngineSummarySentence(engineData, 1);
+        if (!engineSummary || engineSummary === 'No engine information available.') return null;
+
+        // Convert to more natural language
+        return engineSummary
+            .replace(/Offered as a /, '')
+            .replace(/\.$/, '')
+            .toLowerCase();
+    }
+
+    getTransmissionDescription(transmissionData) {
+        if (!transmissionData || !transmissionData.transmissionDescription) return null;
+
+        const transmissionSummary = this.generateTransmissionSummarySentence(transmissionData, 1);
+        if (!transmissionSummary || transmissionSummary === 'No transmission data available') return null;
+
+        // Convert to more natural language
+        return transmissionSummary
+            .replace(/Available with /, '')
+            .replace(/\.$/, '')
+            .toLowerCase();
+    }
+
+    getFuelDescription(fuelData) {
+        if (!fuelData || (!fuelData.fuelConsumption && !fuelData.electricRange)) return null;
+
+        const fuelSummary = this.generateFuelSummarySentence(fuelData, 1);
+        if (!fuelSummary || fuelSummary === 'No fuel economy data available') return null;
+
+        // Convert to more natural language
+        return fuelSummary
+            .replace(/Combined fuel consumption is /, 'Fuel consumption is rated at ')
+            .replace(/Combined fuel consumption ranges from /, 'Fuel consumption ranges from ')
+            .replace(/Provides a combined electric range of /, 'It offers an electric range of ')
+            .replace(/L\/100 km \(ADR 81\/02\)/, 'L/100 km')
+            .replace(/km\.$/, 'km')
+            .replace(/\.$/, '');
+    }
+
+    generateEngineSummarySentence(data, vehicleCount) {
+        // Use the existing engine overview logic but return just the sentence
+        return this.formatEngineOverviewSentence(data, vehicleCount).replace(/<[^>]*>/g, '').replace(/Based on \d+ vehicles/, '').trim();
+    }
+
+    generateTransmissionSummarySentence(data, vehicleCount) {
+        // Use the existing transmission logic but return just the sentence
+        return this.formatTransmissionDescription(data, vehicleCount).replace(/<[^>]*>/g, '').replace(/Based on \d+ vehicles/, '').trim();
+    }
+
+    generateFuelSummarySentence(data, vehicleCount) {
+        // Use the existing fuel economy logic but return just the sentence
+        return this.formatFuelEconomySentence(data, vehicleCount).replace(/<[^>]*>/g, '').replace(/Based on \d+ vehicles/, '').trim();
     }
 }
 

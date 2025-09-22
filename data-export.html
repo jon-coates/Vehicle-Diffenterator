@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Data Export Tool</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .export-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .selection-panel {
+            background: var(--background-white);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .control-group {
+            margin-bottom: 2rem;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .control-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-size: 1rem;
+            background: var(--background-white);
+            transition: var(--transition);
+        }
+
+        .control-select:focus {
+            outline: none;
+            border-color: var(--brand-red);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--background-light);
+            border-radius: var(--border-radius-sm);
+            border: 2px solid var(--border-color);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .category-item:hover {
+            border-color: var(--brand-red);
+            background: var(--brand-red-light);
+        }
+
+        .category-item.selected {
+            border-color: var(--brand-red);
+            background: var(--brand-red);
+            color: white;
+        }
+
+        .category-checkbox {
+            margin-right: 0.75rem;
+            transform: scale(1.2);
+        }
+
+        .category-label {
+            font-weight: 500;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .export-options {
+            background: var(--background-white);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .export-button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .export-button.primary {
+            background: var(--brand-red);
+            color: white;
+        }
+
+        .export-button.primary:hover {
+            background: var(--brand-red-dark);
+        }
+
+        .export-button.secondary {
+            background: var(--background-light);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .export-button.secondary:hover {
+            background: var(--border-color);
+        }
+
+        .export-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .preview-panel {
+            background: var(--background-white);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+            display: none;
+        }
+
+        .preview-panel.active {
+            display: block;
+        }
+
+        .preview-content {
+            max-height: 400px;
+            overflow-y: auto;
+            background: var(--background-light);
+            border-radius: var(--border-radius-sm);
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            border: 1px solid var(--border-color);
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .error-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--accent-red);
+        }
+
+        .selection-summary {
+            background: var(--background-light);
+            border-radius: var(--border-radius-sm);
+            padding: 1rem;
+            margin-top: 1rem;
+            border-left: 4px solid var(--brand-red);
+        }
+
+        .summary-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-content {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .data-source-tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .tab-button.active {
+            color: var(--brand-red);
+            border-bottom-color: var(--brand-red);
+        }
+
+        .tab-button:hover:not(.active) {
+            color: var(--text-primary);
+        }
+
+        .data-source-panel {
+            display: none;
+        }
+
+        .data-source-panel.active {
+            display: block;
+        }
+
+        .file-input-container {
+            margin-top: 0.5rem;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--background-light);
+        }
+
+        .file-input-label:hover {
+            border-color: var(--brand-red);
+            background: var(--brand-red-light);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-input-text {
+            flex: 1;
+            color: var(--text-secondary);
+        }
+
+        .file-input-button {
+            padding: 0.5rem 1rem;
+            background: var(--brand-red);
+            color: white;
+            border-radius: var(--border-radius-sm);
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .file-input-button:hover {
+            background: var(--brand-red-dark);
+        }
+
+        .vehicle-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .level-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .level-button {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border-color);
+            background: var(--background-white);
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .level-button.active {
+            background: var(--brand-red);
+            color: white;
+            border-color: var(--brand-red);
+        }
+
+        .level-button:hover:not(.active) {
+            border-color: var(--brand-red);
+            color: var(--brand-red);
+        }
+
+        .vehicle-selection-controls {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            padding: 1rem;
+            background: var(--background-light);
+        }
+
+        .vehicle-selection-controls .control-group {
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            background: var(--background-white);
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .vehicle-selection-controls .control-group:hover {
+            border-color: var(--brand-red);
+            box-shadow: 0 2px 4px rgba(220, 38, 38, 0.1);
+        }
+
+        .vehicle-selection-controls label {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .vehicle-selection-controls input[type="checkbox"] {
+            transform: scale(1.1);
+            margin-right: 0.75rem;
+        }
+
+        .select-all-container {
+            background: var(--background-white);
+            border: 2px solid var(--brand-red);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Vehicle Data Export Tool</h1>
+            <nav class="page-navigation">
+                <a href="index.html" class="nav-link">← Back to Main</a>
+                <a href="vehicle-overview.html" class="nav-link">Vehicle Overview →</a>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <div class="export-container">
+                <!-- Data Source Selection -->
+                <div class="selection-panel">
+                    <h2 class="panel-title">Data Source</h2>
+                    
+                    <div class="data-source-tabs">
+                        <button class="tab-button active" data-source="preloaded">Preloaded Data</button>
+                        <button class="tab-button" data-source="file">Upload File</button>
+                    </div>
+
+                    <div class="data-source-content">
+                        <!-- Preloaded Data Section -->
+                        <div class="data-source-panel active" id="preloaded-panel">
+                            <div class="control-group">
+                                <label for="preloaded-data-select" class="control-label">Select Preloaded Vehicle Data:</label>
+                                <select id="preloaded-data-select" class="control-select">
+                                    <option value="">Choose a preloaded dataset...</option>
+                                    <option value="FDRA.json">Ford Ranger Vehicle Data</option>
+                                    <option value="allJuke.json">Nissan Juke Data</option>
+                                    <option value="nissanPatrol.json">Nissan Patrol Data</option>
+                                    <option value="suzukiJimny.json">Suzuki Jimny Data</option>
+                                    <option value="mazda2.json">Mazda 2 Data</option>
+                                    <option value="rav4.json">Toyota RAV4 Data</option>
+                                    <option value="teslamodely.json">Tesla Model Y Data</option>
+                                    <option value="hyKona.json">Hyundai Kona Data</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- File Upload Section -->
+                        <div class="data-source-panel" id="file-panel">
+                            <div class="file-input-container">
+                                <label for="vehicle-data-file" class="file-input-label">
+                                    <span class="file-input-text">Choose Vehicle Data File</span>
+                                    <input type="file" id="vehicle-data-file" accept=".json" class="file-input">
+                                    <span class="file-input-button">Browse</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vehicle Selection -->
+                <div class="selection-panel" id="vehicle-selection-panel" style="display: none;">
+                    <h2 class="panel-title">Vehicle Selection</h2>
+                    
+                    <div class="control-group">
+                        <label class="control-label">Data Level:</label>
+                        <div class="level-selector">
+                            <button class="level-button active" data-level="all">All Vehicles</button>
+                            <button class="level-button" data-level="model">By Model</button>
+                            <button class="level-button" data-level="trim">By Trim</button>
+                            <button class="level-button" data-level="variant">By Variant</button>
+                        </div>
+                    </div>
+
+                    <div class="vehicle-selection-controls" id="vehicle-selection-controls">
+                        <!-- Vehicle selection controls will be populated here -->
+                    </div>
+
+                    <div class="selection-summary" id="selection-summary" style="display: none;">
+                        <div class="summary-title">Selection Summary</div>
+                        <div class="summary-content" id="selection-summary-content"></div>
+                    </div>
+                </div>
+
+                <!-- Category Selection -->
+                <div class="selection-panel" id="category-selection-panel" style="display: none;">
+                    <h2 class="panel-title">Data Categories</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">Select the data categories you want to include in your export:</p>
+                    
+                    <div class="category-grid" id="category-grid">
+                        <!-- Categories will be populated here -->
+                    </div>
+
+                    <div class="control-group" style="margin-top: 1rem;">
+                        <button id="select-all-categories" class="export-button secondary">Select All</button>
+                        <button id="deselect-all-categories" class="export-button secondary">Deselect All</button>
+                    </div>
+                </div>
+
+                <!-- Export Options -->
+                <div class="export-options" id="export-options" style="display: none;">
+                    <h2 class="panel-title">Export Options</h2>
+                    
+                    <div class="export-buttons">
+                        <button id="export-json" class="export-button primary">
+                            📄 Export as JSON
+                        </button>
+                        <button id="export-csv" class="export-button primary">
+                            📊 Export as CSV
+                        </button>
+                        <button id="preview-data" class="export-button secondary">
+                            👁️ Preview Data
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading-state" class="loading-state" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Loading vehicle data...</p>
+                </div>
+
+                <!-- Error State -->
+                <div id="error-state" class="error-state" style="display: none;">
+                    <h3>Error Loading Data</h3>
+                    <p id="error-text"></p>
+                </div>
+
+                <!-- Preview Panel -->
+                <div class="preview-panel" id="preview-panel">
+                    <h2 class="panel-title">Data Preview</h2>
+                    <div class="preview-content" id="preview-content"></div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2024 Vehicle Comparison Tool. Built with modern web technologies.</p>
+        </footer>
+    </div>
+
+    <script src="data-export.js"></script>
+</body>
+</html>
