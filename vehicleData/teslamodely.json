@@ -481,6 +481,7 @@
             "emissionControlLevelCo2LevelCntryHighway": "0"
           },
           "fuel": {
+            "fuelSummary": "Standard",
             "fuelType": "Electric",
             "fuelOtherFuelType": "None",
             "fuelMinimumFuelType": "Electric",

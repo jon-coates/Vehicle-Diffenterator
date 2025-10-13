@@ -71,8 +71,8 @@ class VehicleComparison {
 
     async loadDefaultData() {
         try {
-            // Load the first available dataset by default (Suzuki Jimny)
-            const response = await fetch('vehicleData/suzukiJimny.json');
+            // Load the first available dataset by default (Kona)
+            const response = await fetch('vehicleData/hyKona.json');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -216,6 +216,15 @@ class VehicleComparison {
             versionName: generalInfo.localVersionName || vehicleData.versionName || '',
             year: vehicleData.modelYear || vehicleData.year || new Date().getFullYear(),
             price: vehicleData.price || 0,
+            transmissionType: vehicleData.transmissionType || null,
+            transmissionSpeeds: vehicleData.transmissionNumberOfSpeeds || null,
+            transmissionDescription: vehicleData.transmissionDescription || null,
+            drivenWheels: vehicleData.drivenWheels || null,
+            fuelType: vehicleData.fuelType || null,
+            bodyType: vehicleData.bodyType || null,
+            powertrainType: vehicleData.powertrainType || null,
+            hasHighLowGearData: vehicleData.hasHighLowGearData || false,
+            bodyExterior: vehicleData.bodyExterior || {},
             specifications: this.extractSpecifications(vehicleData),
             isCurrent: vehicleData.isCurrent !== false
         };
@@ -512,9 +521,15 @@ class VehicleComparison {
             return;
         }
 
-        grid.innerHTML = sortedVehicles.map(vehicle => 
+        // Create overview section
+        const overviewHTML = this.createVehicleOverview(sortedVehicles);
+        
+        // Create vehicle cards
+        const cardsHTML = sortedVehicles.map(vehicle => 
             this.createVehicleCard(vehicle, filteredDifferences)
         ).join('');
+
+        grid.innerHTML = overviewHTML + cardsHTML;
 
         // Add intersection observer for lazy loading animations
         this.observeCards();
@@ -617,6 +632,423 @@ class VehicleComparison {
         `;
         
         accordion.style.display = 'block';
+    }
+
+    createVehicleOverview(vehicles) {
+        if (vehicles.length === 0) return '';
+
+        // Extract aggregate data
+        const prices = vehicles.map(v => v.price).filter(p => p && p > 0);
+        const priceFrom = prices.length > 0 ? Math.min(...prices) : 0;
+        const priceTo = prices.length > 0 ? Math.max(...prices) : 0;
+        const priceRange = priceFrom === priceTo ? 
+            `$${this.formatPrice(priceFrom)}` : 
+            `$${this.formatPrice(priceFrom)} - $${this.formatPrice(priceTo)}`;
+        
+        const transmissions = new Set(); // Use Set to store unique transmission displays
+        const drivenWheels = new Set();
+        const fuelTypes = new Set();
+        const bodyTypes = new Set();
+        const powertrainTypes = new Set();
+
+        vehicles.forEach(vehicle => {
+            // Extract transmission with enhanced logic
+            const transmissionResult = this.formatTransmissionDisplay(vehicle);
+            if (transmissionResult) {
+                transmissions.add(transmissionResult);
+            }
+
+            if (vehicle.drivenWheels) {
+                drivenWheels.add(vehicle.drivenWheels);
+            }
+
+            if (vehicle.fuelType) {
+                fuelTypes.add(vehicle.fuelType);
+            }
+
+            // Extract body type with enhanced logic
+            const bodyTypeDisplay = this.formatBodyTypeDisplay(vehicle);
+            if (bodyTypeDisplay) {
+                bodyTypes.add(bodyTypeDisplay);
+            }
+
+            // Extract powertrain with enhanced formatting
+            const powertrainDisplay = this.formatPowertrainDisplay(vehicle);
+            if (powertrainDisplay) {
+                powertrainTypes.add(powertrainDisplay);
+            }
+        });
+
+        // Format transmission display for aggregation (without HTML)
+        const transmissionDisplays = Array.from(transmissions).map(t => t.display).sort();
+        const transmissionDisplay = this.formatTransmissionAggregationPlain(transmissionDisplays);
+
+        const makeModel = `${vehicles[0].make} ${vehicles[0].model}`;
+
+        const overviewElement = document.createElement('div');
+        overviewElement.className = 'vehicle-overview';
+        
+        // Create header
+        const header = document.createElement('div');
+        header.className = 'overview-header';
+        header.innerHTML = `
+            <h2 class="overview-title">${makeModel}</h2>
+            <p class="overview-subtitle">${vehicles.length} variant${vehicles.length > 1 ? 's' : ''} available</p>
+        `;
+        
+        // Create grid
+        const grid = document.createElement('div');
+        grid.className = 'overview-grid';
+        
+        // Price item
+        const priceItem = document.createElement('div');
+        priceItem.className = 'overview-item';
+        priceItem.innerHTML = `
+            <span class="overview-label">Price Range:</span>
+            <span class="overview-value">${priceRange}</span>
+        `;
+        grid.appendChild(priceItem);
+        
+        // Transmission item
+        if (transmissions.size > 0) {
+            const transmissionItem = document.createElement('div');
+            transmissionItem.className = 'overview-item';
+            
+            const label = document.createElement('span');
+            label.className = 'overview-label';
+            label.textContent = 'Transmission:';
+            
+            const value = document.createElement('span');
+            value.className = 'overview-value';
+            
+            // Parse the transmission display and create elements with tooltips
+            this.addTransmissionElements(value, transmissionDisplay, Array.from(transmissions));
+            
+            transmissionItem.appendChild(label);
+            transmissionItem.appendChild(value);
+            grid.appendChild(transmissionItem);
+        }
+        
+        // Other items
+        if (drivenWheels.size > 0) {
+            const wheelsItem = document.createElement('div');
+            wheelsItem.className = 'overview-item';
+            wheelsItem.innerHTML = `
+                <span class="overview-label">Driven Wheels:</span>
+                <span class="overview-value">${this.formatValueList(Array.from(drivenWheels))}</span>
+            `;
+            grid.appendChild(wheelsItem);
+        }
+        
+        if (fuelTypes.size > 0) {
+            const fuelItem = document.createElement('div');
+            fuelItem.className = 'overview-item';
+            fuelItem.innerHTML = `
+                <span class="overview-label">Fuel Type:</span>
+                <span class="overview-value">${this.formatValueList(this.sortFuelTypes(Array.from(fuelTypes)))}</span>
+            `;
+            grid.appendChild(fuelItem);
+        }
+        
+        if (bodyTypes.size > 0) {
+            const bodyItem = document.createElement('div');
+            bodyItem.className = 'overview-item';
+            bodyItem.innerHTML = `
+                <span class="overview-label">Body Type:</span>
+                <span class="overview-value">${this.formatValueList(Array.from(bodyTypes))}</span>
+            `;
+            grid.appendChild(bodyItem);
+        }
+        
+        if (powertrainTypes.size > 0) {
+            const powertrainItem = document.createElement('div');
+            powertrainItem.className = 'overview-item';
+            powertrainItem.innerHTML = `
+                <span class="overview-label">Powertrain Type:</span>
+                <span class="overview-value">${this.formatValueList(this.sortPowertrainTypes(Array.from(powertrainTypes)))}</span>
+            `;
+            grid.appendChild(powertrainItem);
+        }
+        
+        overviewElement.appendChild(header);
+        overviewElement.appendChild(grid);
+        
+        return overviewElement.outerHTML;
+    }
+
+    formatTransmissionDisplay(vehicle) {
+        const { transmissionType, transmissionSpeeds, transmissionDescription, powertrainType, fuelType, hasHighLowGearData } = vehicle;
+        
+        // Rule 1: Battery Electric Vehicles (BEV)
+        if ((powertrainType === "Battery Electric Vehicle" || fuelType === "Electric") && transmissionSpeeds === "1") {
+            return { display: "Single-Speed Auto", tooltip: "Electric vehicles use a single-speed transmission as the electric motor delivers power efficiently across all speeds without needing multiple gears." };
+        }
+        
+        // Rule 2: CVT Transmissions
+        if (transmissionSpeeds === "Variable") {
+            return { display: "Auto (CVT)", tooltip: "Continuously Variable Transmission - uses a belt-and-pulley system instead of traditional gears for seamless acceleration. Optimised for fuel efficiency and smooth power delivery." };
+        }
+        
+        // Rule 3: Dual-Clutch Transmissions (DCT)
+        if (transmissionDescription && (transmissionDescription.toLowerCase().includes("dual clutch") || transmissionDescription.toLowerCase().includes("dct"))) {
+            const speeds = transmissionSpeeds || "Unknown";
+            return { display: `${speeds} Speed Auto (DCT)`, tooltip: "Dual-Clutch Transmission - combines the efficiency of a manual gearbox with the convenience of an automatic. Delivers faster, smoother gear changes, particularly noticeable in sportier driving." };
+        }
+        
+        // Rule 4: Standard Combustion/Hybrid Vehicles (only if not DCT)
+        if (transmissionSpeeds && transmissionType) {
+            const type = transmissionType === "Automatic" ? "Auto" : "Manual";
+            let display = `${transmissionSpeeds} Speed ${type}`;
+            
+            // Optional: Add Hi/Lo range notation for 4x4 vehicles
+            if (hasHighLowGearData && transmissionType === "Automatic") {
+                display += " (with Hi/Lo range)";
+            }
+            
+            return { display, tooltip: null }; // No tooltip for standard transmissions
+        }
+        
+        // Fallback: Just the type if no speeds available
+        if (transmissionType) {
+            const display = transmissionType === "Automatic" ? "Auto" : transmissionType;
+            return { display, tooltip: null };
+        }
+        
+        // Fallback: Use transmission description if available
+        if (transmissionDescription) {
+            const desc = transmissionDescription.toLowerCase();
+            if (desc.includes("continuously variable") || desc.includes("cvt")) {
+                return { display: "Auto (CVT)", tooltip: "Continuously Variable Transmission - uses a belt-and-pulley system instead of traditional gears for seamless acceleration. Optimised for fuel efficiency and smooth power delivery." };
+            }
+            if (desc.includes("dual clutch") || desc.includes("dct")) {
+                return { display: "DCT", tooltip: "Dual-Clutch Transmission - combines the efficiency of a manual gearbox with the convenience of an automatic. Delivers faster, smoother gear changes, particularly noticeable in sportier driving." };
+            }
+            if (desc.includes("manual")) {
+                return { display: "Manual", tooltip: null };
+            }
+            if (desc.includes("automatic")) {
+                return { display: "Auto", tooltip: null };
+            }
+        }
+        
+        return null;
+    }
+
+    formatTransmissionAggregationPlain(displays) {
+        // Group similar transmission types for better aggregation (plain text only)
+        const groups = {
+            'Auto': [],
+            'Manual': [],
+            'CVT': [],
+            'DCT': [],
+            'EV': []
+        };
+
+        displays.forEach(display => {
+            if (display.includes('Single-Speed Auto')) {
+                groups.EV.push(display);
+            } else if (display.includes('CVT')) {
+                groups.CVT.push(display);
+            } else if (display.includes('DCT')) {
+                groups.DCT.push(display);
+            } else if (display.includes('Auto')) {
+                groups.Auto.push(display);
+            } else if (display.includes('Manual')) {
+                groups.Manual.push(display);
+            }
+        });
+
+        const result = [];
+        
+        // Add each group, sorted by speed number
+        Object.keys(groups).forEach(type => {
+            if (groups[type].length > 0) {
+                const uniqueDisplays = [...new Set(groups[type])];
+                if (uniqueDisplays.length === 1) {
+                    result.push(uniqueDisplays[0]);
+                } else {
+                    // Sort by speed number (lowest first)
+                    const sortedDisplays = uniqueDisplays.sort((a, b) => {
+                        const aSpeed = parseInt(a.match(/(\d+)\s+Speed/)?.[1] || '0');
+                        const bSpeed = parseInt(b.match(/(\d+)\s+Speed/)?.[1] || '0');
+                        return aSpeed - bSpeed;
+                    });
+                    
+                    // Multiple speeds of same type - use "or" format with sorted speeds
+                    const speeds = sortedDisplays.map(d => d.match(/(\d+)\s+Speed/)?.[1]).filter(Boolean);
+                    if (speeds.length > 1) {
+                        const speedsRange = speeds.length === 2 ? speeds.join(' or ') : speeds[0] + '-' + speeds[speeds.length - 1];
+                        // Extract base type but preserve parenthetical designations like (CVT) or (DCT)
+                        const baseType = sortedDisplays[0].replace(/\d+\s+Speed\s+/, '');
+                        const combinedDisplay = `${speedsRange} Speed ${baseType}`;
+                        result.push(combinedDisplay);
+                    } else {
+                        result.push(...sortedDisplays);
+                    }
+                }
+            }
+        });
+
+        return result.join(', ');
+    }
+
+    addTransmissionElements(container, transmissionDisplay, transmissionResults) {
+        // Build HTML string directly with inline onclick - much simpler and more reliable
+        let html = '';
+        const parts = transmissionDisplay.split(', ');
+        
+        parts.forEach((part, index) => {
+            if (index > 0) {
+                html += ', ';
+            }
+            
+            const partTrimmed = part.trim();
+            let tooltipText = null;
+            
+            // Find tooltip for special transmission types
+            if (partTrimmed.includes('CVT')) {
+                tooltipText = transmissionResults.find(r => r.display && r.display.includes('CVT'))?.tooltip;
+            } else if (partTrimmed.includes('DCT')) {
+                tooltipText = transmissionResults.find(r => r.display && r.display.includes('DCT'))?.tooltip;
+            } else if (partTrimmed.includes('Single-Speed Auto')) {
+                tooltipText = transmissionResults.find(r => r.display && r.display.includes('Single-Speed Auto'))?.tooltip;
+            }
+            
+            if (tooltipText) {
+                // Escape single quotes in tooltip text for use in onclick
+                const escapedTooltip = tooltipText.replace(/'/g, "\\'");
+                html += `<span class="transmission-info" 
+                              style="cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px;"
+                              onclick="alert('${escapedTooltip}'); return false;"
+                              title="Click for more information">${partTrimmed}</span>`;
+            } else {
+                html += partTrimmed;
+            }
+        });
+        
+        container.innerHTML = html;
+    }
+
+    formatBodyTypeDisplay(vehicle) {
+        const bodyExterior = vehicle.bodyExterior || {};
+        
+        // Extract data with priority for local values
+        const bodyType = bodyExterior.localBodyType || bodyExterior.bodyType;
+        const cabType = bodyExterior.cabType;
+        const bodyLength = bodyExterior.bodyLength;
+        
+        // Return null if no body type data
+        if (!bodyType) {
+            return null;
+        }
+        
+        // Determine if cab type should be included
+        const includeCabType = cabType && 
+                               cabType !== "None" && 
+                               (bodyType === "Cab Chassis" || 
+                                bodyType === "Utility" || 
+                                bodyType === "Panel Van");
+        
+        // Determine if body length should be included
+        const includeBodyLength = bodyLength && bodyLength !== "Regular";
+        
+        // Build display string
+        let display = includeCabType ? `${cabType} ${bodyType}` : bodyType;
+        
+        if (includeBodyLength) {
+            display += ` (${bodyLength})`;
+        }
+        
+        return display;
+    }
+
+    formatPowertrainDisplay(vehicle) {
+        const { powertrainType, fuelType } = vehicle;
+        
+        if (!powertrainType) {
+            return null;
+        }
+        
+        // Map powertrain types to user-friendly labels
+        switch (powertrainType) {
+            case "Battery Electric Vehicle":
+                return "Electric";
+            
+            case "Hybrid Electric Vehicle":
+                return "Hybrid";
+            
+            case "Plug-in Hybrid Electric Vehicle":
+                return "Plug-in Hybrid";
+            
+            case "Combustion":
+                // Determine fuel type for combustion vehicles
+                if (fuelType) {
+                    const fuel = fuelType.toLowerCase();
+                    if (fuel.includes("diesel")) {
+                        return "Diesel";
+                    } else if (fuel.includes("petrol") || fuel.includes("unleaded")) {
+                        return "Petrol";
+                    } else if (fuel.includes("lpg") || fuel.includes("gas")) {
+                        return "LPG";
+                    }
+                }
+                return "Petrol"; // Default for combustion
+            
+            default:
+                // Return the original value if not in our mapping
+                return powertrainType;
+        }
+    }
+
+    formatValueList(values) {
+        if (values.length === 0) return '';
+        if (values.length === 1) return values[0];
+        if (values.length === 2) return values.join(' or ');
+        
+        // For 3+ items, use Oxford comma with "or" before the last item
+        const lastItem = values[values.length - 1];
+        const otherItems = values.slice(0, -1);
+        return `${otherItems.join(', ')}, or ${lastItem}`;
+    }
+
+    sortPowertrainTypes(types) {
+        const order = ['Petrol', 'Diesel', 'LPG', 'Hybrid', 'Plug-in Hybrid', 'Electric'];
+        return types.sort((a, b) => {
+            const aIndex = order.indexOf(a);
+            const bIndex = order.indexOf(b);
+            
+            // If both are in the order, sort by order
+            if (aIndex !== -1 && bIndex !== -1) {
+                return aIndex - bIndex;
+            }
+            
+            // If only one is in the order, prioritize it
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            
+            // If neither is in the order, sort alphabetically
+            return a.localeCompare(b);
+        });
+    }
+
+    sortFuelTypes(types) {
+        const order = ['Petrol', 'Unleaded', 'Diesel', 'LPG', 'Electric', 'Hybrid'];
+        return types.sort((a, b) => {
+            const aIndex = order.indexOf(a);
+            const bIndex = order.indexOf(b);
+            
+            // If both are in the order, sort by order
+            if (aIndex !== -1 && bIndex !== -1) {
+                return aIndex - bIndex;
+            }
+            
+            // If only one is in the order, prioritize it
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            
+            // If neither is in the order, sort alphabetically
+            return a.localeCompare(b);
+        });
     }
 
     createVehicleCard(vehicle, differences) {
