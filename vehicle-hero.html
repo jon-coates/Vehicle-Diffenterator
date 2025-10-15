@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ford Ranger - Vehicle Overview</title>
+    <link rel="stylesheet" href="hero-styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="hero-container">
+        <!-- Navigation Breadcrumbs -->
+        <nav class="breadcrumbs">
+            <a href="index.html">Home</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="#">Showroom</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="#">Ford</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="current-page">Ranger</span>
+        </nav>
+
+        <!-- Main Hero Section -->
+        <main class="hero-main">
+            <!-- Left Column - Vehicle Information -->
+            <div class="hero-left">
+                <div class="vehicle-header">
+                    <div class="title-container">
+                        <h1 class="vehicle-title" id="vehicle-title">Ford Ranger</h1>
+                        <div class="car-selector">
+                            <button class="car-dropdown-toggle" onclick="toggleCarDropdown()">
+                                <span class="dropdown-arrow">▼</span>
+                            </button>
+                            <div class="car-dropdown" id="car-dropdown">
+                                <div class="dropdown-item" data-file="FDRA.json" onclick="selectVehicle('FDRA.json')">Ford Ranger</div>
+                                <div class="dropdown-item" data-file="fordTransit.json" onclick="selectVehicle('fordTransit.json')">Ford Transit</div>
+                                <div class="dropdown-item" data-file="bydSealion6.json" onclick="selectVehicle('bydSealion6.json')">BYD Sealion 6</div>
+                                <div class="dropdown-item" data-file="bydSealion7.json" onclick="selectVehicle('bydSealion7.json')">BYD Sealion 7</div>
+                                <div class="dropdown-item" data-file="hyKona.json" onclick="selectVehicle('hyKona.json')">Hyundai Kona</div>
+                                <div class="dropdown-item" data-file="mazda2.json" onclick="selectVehicle('mazda2.json')">Mazda 2</div>
+                                <div class="dropdown-item" data-file="allJuke.json" onclick="selectVehicle('allJuke.json')">Nissan Juke</div>
+                                <div class="dropdown-item" data-file="nissanPatrol.json" onclick="selectVehicle('nissanPatrol.json')">Nissan Patrol</div>
+                                <div class="dropdown-item" data-file="suzukiJimny.json" onclick="selectVehicle('suzukiJimny.json')">Suzuki Jimny</div>
+                                <div class="dropdown-item" data-file="teslamodely.json" onclick="selectVehicle('teslamodely.json')">Tesla Model Y</div>
+                                <div class="dropdown-item" data-file="rav4.json" onclick="selectVehicle('rav4.json')">Toyota RAV4</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="compare-button">
+                        <span class="compare-icon">+</span>
+                        Compare
+                    </button>
+                </div>
+
+                <div class="vehicle-description">
+                    <p class="description-text">
+                        <span class="description-preview">The Ford Ranger is a versatile midsize pickup truck with a storied history dating back to 1982. Originally introduced as a compact truck, it evolved over the decades to become a robust and capable vehicle. Known for its durability and performance, the Ranger offers a balance of rugged utility and modern technology, making it a popular choice for both work and adventure. The current generation features advanced safety systems, comfortable interiors, and powerful engine options that deliver impressive towing capacity. Whether you're hauling equipment to a job site or embarking on an off-road adventure, the Ranger delivers the capability and reliability that Ford truck owners have come to expect over the decades.</span>
+                    </p>
+                    <button class="read-more-button" onclick="toggleDescription()">
+                        <span class="read-more-text">Read More</span>
+                        <span class="read-more-icon">▼</span>
+                    </button>
+                </div>
+
+                <div class="specifications-grid">
+                    <div class="spec-item">
+                        <div class="spec-label">Retail Price</div>
+                        <div class="spec-value" id="price-value">$53,000 - $75,000</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Transmission</div>
+                        <div class="spec-value" id="transmission-value">6 or 8-speed auto</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Driven Wheels</div>
+                        <div class="spec-value" id="driven-wheels-value">4x4 or Front</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Fuel Type</div>
+                        <div class="spec-value" id="fuel-type-value">Petrol or Diesel</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Body Types</div>
+                        <div class="spec-value" id="body-types-value">4-door cargo van, 5-door cargo van, 5-door combi, 4-door passenger van</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-label">Powertrain Type</div>
+                        <div class="spec-value" id="powertrain-value">Combustion, HEV</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Hero Image and Ratings -->
+            <div class="hero-right">
+                <!-- Hero Image -->
+                <div class="hero-image-container">
+                    <img src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&h=600&fit=crop&crop=center" alt="Ford Ranger" class="hero-image" id="hero-image">
+                    
+                    <!-- Image Navigation -->
+                    <button class="image-nav image-nav-left" onclick="navigateImage(-1)">‹</button>
+                    <button class="image-nav image-nav-right" onclick="navigateImage(1)">›</button>
+                    
+                    <!-- Image Gallery Button -->
+                    <button class="gallery-button">
+                        <span class="gallery-icon">📷</span>
+                        View 30 images
+                    </button>
+                </div>
+
+                <!-- Ratings Section -->
+                <div class="ratings-section">
+                    <div class="rating-card expert-rating">
+                        <div class="rating-header">
+                            <span class="rating-icon expert-icon">✓</span>
+                            <span class="rating-title">Expert Rating</span>
+                        </div>
+                        <div class="rating-value">Very Good</div>
+                        <div class="rating-count">4 Reviews</div>
+                        <div class="rating-gauge">
+                            <div class="gauge-background"></div>
+                            <div class="gauge-needle expert-needle"></div>
+                        </div>
+                    </div>
+
+                    <div class="rating-card owner-rating">
+                        <div class="rating-header">
+                            <span class="rating-title">Owner Rating</span>
+                        </div>
+                        <div class="rating-value">Very Good</div>
+                        <div class="rating-count">200 Reviews</div>
+                        <div class="rating-gauge">
+                            <div class="gauge-background"></div>
+                            <div class="gauge-needle owner-needle"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Section - Call to Action and Related Content -->
+                <section class="bottom-section">
+                    <div class="action-card save-card">
+                        <h3 class="action-title">Save Thousands on a new Ford Ranger</h3>
+                        <p class="action-description">CarExpert does the hard work to get you the best price. No negotiating, no hidden costs, just expert help and real savings on your next new car.</p>
+                        <button class="action-button">Find a deal</button>
+                    </div>
+
+                    <div class="action-card news-card">
+                        <div class="card-background" style="background-image: url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&h=300&fit=crop&crop=center')"></div>
+                        <div class="card-overlay">
+                            <span class="card-title">News</span>
+                            <span class="card-arrow">→</span>
+                        </div>
+                    </div>
+
+                    <div class="action-card reviews-card">
+                        <div class="card-background" style="background-image: url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&h=300&fit=crop&crop=center')"></div>
+                        <div class="card-overlay">
+                            <span class="card-title">Reviews</span>
+                            <span class="card-arrow">→</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="hero-script.js"></script>
+</body>
+</html>
