@@ -106,11 +106,12 @@ async function loadVehicleData(filename) {
 function updatePageContent(vehicles) {
     // Extract vehicle info from first variant
     const firstVehicle = vehicles[0].vehicle || vehicles[0];
+    const displayNameFull = firstVehicle.modelDetails?.displayNameFull || `${firstVehicle.make} ${firstVehicle.model}`;
     const make = firstVehicle.make || 'Unknown';
-    const model = firstVehicle.model || 'Unknown';
+    const model = firstVehicle.modelDetails?.displayNameShort || firstVehicle.model || 'Unknown';
     
-    // Update title
-    document.getElementById('vehicle-title').textContent = `${make} ${model}`;
+    // Update title with displayNameFull
+    document.getElementById('vehicle-title').textContent = displayNameFull;
     
     // Update breadcrumb
     const breadcrumbs = document.querySelectorAll('.breadcrumbs a');
