@@ -49,29 +49,9 @@ function positionTooltip(tooltip, event) {
     tooltip.style.top = y + 'px';
 }
 
-// Dropdown toggle - MUST be global for inline onclick
-function toggleCarDropdown() {
-    const dropdown = document.getElementById('car-dropdown');
-    const toggle = document.querySelector('.car-dropdown-toggle');
-    
-    dropdown.classList.toggle('show');
-    toggle.classList.toggle('open');
-}
-
-// Vehicle selection - MUST be global for inline onclick
+// Vehicle selection - MUST be global for inline onchange
 async function selectVehicle(filename) {
     console.log('Selected vehicle:', filename);
-    
-    // Update dropdown UI
-    document.querySelectorAll('.dropdown-item').forEach(item => {
-        item.classList.remove('selected');
-    });
-    
-    const clickedItem = event.target;
-    clickedItem.classList.add('selected');
-    
-    // Close dropdown
-    toggleCarDropdown();
     
     // Load vehicle data
     await loadVehicleData(filename);
@@ -107,30 +87,15 @@ function updatePageContent(vehicles) {
     // Extract vehicle info from first variant
     const firstVehicle = vehicles[0].vehicle || vehicles[0];
     const displayNameFull = firstVehicle.modelDetails?.displayNameFull || `${firstVehicle.make} ${firstVehicle.model}`;
-    const make = firstVehicle.make || 'Unknown';
-    const model = firstVehicle.modelDetails?.displayNameShort || firstVehicle.model || 'Unknown';
     
     // Update title with displayNameFull
     document.getElementById('vehicle-title').textContent = displayNameFull;
-    
-    // Update breadcrumb
-    const breadcrumbs = document.querySelectorAll('.breadcrumbs a');
-    if (breadcrumbs.length >= 3) {
-        breadcrumbs[2].textContent = make;
-    }
-    const currentPage = document.querySelector('.current-page');
-    if (currentPage) {
-        currentPage.textContent = model;
-    }
     
     // Aggregate data across all variants
     const aggregatedData = aggregateVehicleData(vehicles);
     
     // Update specifications
     updateSpecifications(aggregatedData);
-    
-    // Update description (if available from standardText)
-    updateDescription(firstVehicle);
     
     // Re-apply transmission tooltips after updating specs
     addTransmissionTooltips();
@@ -364,55 +329,6 @@ function formatValueList(values) {
     return `${otherItems.join(', ')}, or ${lastItem}`;
 }
 
-// Update description if available
-function updateDescription(vehicle) {
-    // For now, keep the default description as the data doesn't include descriptions
-    // You could add custom descriptions per vehicle later
-    console.log('Vehicle loaded:', vehicle.make, vehicle.model);
-}
-
-// Image navigation - MUST be global for inline onclick
-let currentImageIndex = 0;
-const images = [
-    'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&h=600&fit=crop&crop=center',
-    'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=600&fit=crop&crop=center',
-    'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop&crop=center'
-];
-
-function navigateImage(direction) {
-    currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
-    document.getElementById('hero-image').src = images[currentImageIndex];
-}
-
-// Description toggle - MUST be global for inline onclick
-function toggleDescription() {
-    const description = document.querySelector('.description-text');
-    const button = document.querySelector('.read-more-button');
-    const specsGrid = document.querySelector('.specifications-grid');
-    
-    description.classList.toggle('expanded');
-    button.classList.toggle('expanded');
-    
-    // Hide specifications when description is expanded
-    if (description.classList.contains('expanded')) {
-        specsGrid.classList.add('hidden');
-        button.querySelector('.read-more-text').textContent = 'Read Less';
-    } else {
-        specsGrid.classList.remove('hidden');
-        button.querySelector('.read-more-text').textContent = 'Read More';
-    }
-}
-
-// Close dropdown when clicking outside
-document.addEventListener('click', (event) => {
-    const dropdown = document.getElementById('car-dropdown');
-    const toggle = document.querySelector('.car-dropdown-toggle');
-    
-    if (!event.target.closest('.car-selector')) {
-        if (dropdown) dropdown.classList.remove('show');
-        if (toggle) toggle.classList.remove('open');
-    }
-});
 
 // Add transmission tooltips to the transmission value
 function addTransmissionTooltips() {
@@ -482,14 +398,7 @@ function addTransmissionTooltips() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
-    // Load default vehicle (Ford Ranger)
+    // Load default vehicle (Hyundai Kona)
     const defaultVehicle = 'hyKona.json';
     await loadVehicleData(defaultVehicle);
-    
-    // Mark the current vehicle as selected in dropdown
-    document.querySelectorAll('.dropdown-item').forEach(item => {
-        if (item.dataset.file === defaultVehicle) {
-            item.classList.add('selected');
-        }
-    });
 });

@@ -3,68 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ford Ranger - Vehicle Overview</title>
+    <title>Vehicle Specifications - Proof of Concept</title>
     <link rel="stylesheet" href="hero-styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="hero-container">
-        <!-- Navigation Breadcrumbs -->
-        <nav class="breadcrumbs">
-            <a href="index.html">Home</a>
-            <span class="breadcrumb-separator">/</span>
-            <a href="#">Showroom</a>
-            <span class="breadcrumb-separator">/</span>
-            <a href="#">Ford</a>
-            <span class="breadcrumb-separator">/</span>
-            <span class="current-page">Ranger</span>
-        </nav>
+    <div class="container">
+        <header class="page-header">
+            <h1>Vehicle Specifications - Proof of Concept</h1>
+            <p class="page-subtitle">Demonstrating aggregation and display logic for vehicle specifications across all variants</p>
+        </header>
 
-        <!-- Main Hero Section -->
-        <main class="hero-main">
-            <!-- Left Column - Vehicle Information -->
-            <div class="hero-left">
-                <div class="vehicle-header">
-                    <h1 class="vehicle-title" id="vehicle-title">Loading...</h1>
-                </div>
+        <div class="main-content">
+            <!-- Left Column - Specifications -->
+            <section class="specs-section">
+                <h2 id="vehicle-title">Loading...</h2>
                 
-                <div class="button-group">
-                    <button class="compare-button">
-                        <span class="compare-icon">+</span>
-                        <span>Compare</span>
-                    </button>
-                    
-                    <div class="car-selector">
-                        <button class="car-dropdown-toggle" onclick="toggleCarDropdown()">
-                            <span>Sample data</span>
-                            <span class="dropdown-arrow">▼</span>
-                        </button>
-                        <div class="car-dropdown" id="car-dropdown">
-                            <div class="dropdown-item" data-file="FDRA.json" onclick="selectVehicle('FDRA.json')">Ford Ranger</div>
-                            <div class="dropdown-item" data-file="fordTransit.json" onclick="selectVehicle('fordTransit.json')">Ford Transit</div>
-                            <div class="dropdown-item" data-file="bydSealion6.json" onclick="selectVehicle('bydSealion6.json')">BYD Sealion 6</div>
-                            <div class="dropdown-item" data-file="bydSealion7.json" onclick="selectVehicle('bydSealion7.json')">BYD Sealion 7</div>
-                            <div class="dropdown-item" data-file="hyKona.json" onclick="selectVehicle('hyKona.json')">Hyundai Kona</div>
-                            <div class="dropdown-item" data-file="mazda2.json" onclick="selectVehicle('mazda2.json')">Mazda 2</div>
-                            <div class="dropdown-item" data-file="allJuke.json" onclick="selectVehicle('allJuke.json')">Nissan Juke</div>
-                            <div class="dropdown-item" data-file="nissanPatrol.json" onclick="selectVehicle('nissanPatrol.json')">Nissan Patrol</div>
-                            <div class="dropdown-item" data-file="suzukiJimny.json" onclick="selectVehicle('suzukiJimny.json')">Suzuki Jimny</div>
-                            <div class="dropdown-item" data-file="teslamodely.json" onclick="selectVehicle('teslamodely.json')">Tesla Model Y</div>
-                            <div class="dropdown-item" data-file="rav4.json" onclick="selectVehicle('rav4.json')">Toyota RAV4</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="vehicle-description">
-                    <p class="description-text">
-                        <span class="description-preview">The Ford Ranger is a versatile midsize pickup truck with a storied history dating back to 1982. Originally introduced as a compact truck, it evolved over the decades to become a robust and capable vehicle. Known for its durability and performance, the Ranger offers a balance of rugged utility and modern technology, making it a popular choice for both work and adventure. The current generation features advanced safety systems, comfortable interiors, and powerful engine options that deliver impressive towing capacity. Whether you're hauling equipment to a job site or embarking on an off-road adventure, the Ranger delivers the capability and reliability that Ford truck owners have come to expect over the decades.</span>
-                    </p>
-                    <button class="read-more-button" onclick="toggleDescription()">
-                        <span class="read-more-text">Read More</span>
-                        <span class="read-more-icon">▼</span>
-                    </button>
+                <div class="vehicle-selector">
+                    <label for="vehicle-select">Select Vehicle:</label>
+                    <select id="vehicle-select" onchange="selectVehicle(this.value)">
+                        <option value="FDRA.json">Ford Ranger</option>
+                        <option value="fordTransit.json">Ford Transit</option>
+                        <option value="bydSealion6.json">BYD Sealion 6</option>
+                        <option value="bydSealion7.json">BYD Sealion 7</option>
+                        <option value="hyKona.json" selected>Hyundai Kona</option>
+                        <option value="mazda2.json">Mazda 2</option>
+                        <option value="allJuke.json">Nissan Juke</option>
+                        <option value="nissanPatrol.json">Nissan Patrol</option>
+                        <option value="suzukiJimny.json">Suzuki Jimny</option>
+                        <option value="teslamodely.json">Tesla Model Y</option>
+                        <option value="rav4.json">Toyota RAV4</option>
+                    </select>
                 </div>
 
                 <div class="specifications-grid">
@@ -93,197 +61,87 @@
                         <div class="spec-value" id="powertrain-value">Loading...</div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- Right Column - Hero Image and Ratings -->
-            <div class="hero-right">
-                <!-- Hero Image -->
-                <div class="hero-image-container">
-                    <img src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&h=600&fit=crop&crop=center" alt="Ford Ranger" class="hero-image" id="hero-image">
-                    
-                    <!-- Image Navigation -->
-                    <button class="image-nav image-nav-left" onclick="navigateImage(-1)">‹</button>
-                    <button class="image-nav image-nav-right" onclick="navigateImage(1)">›</button>
-                    
-                    <!-- Image Gallery Button -->
-                    <button class="gallery-button">
-                        <span class="gallery-icon">📷</span>
-                        View 30 images
-                    </button>
-                </div>
+            <!-- Right Column - Documentation -->
+            <section class="documentation-section">
+                <h3>Implementation Guide</h3>
+                <p class="doc-intro"><strong>Purpose:</strong> This POC demonstrates specifications aggregation and display logic for developers. It is NOT a production design.</p>
+                
+                <h4>Aggregation Rules</h4>
+                <ul>
+                    <li><strong>Price Range:</strong> Display minimum to maximum across all variants. If all variants have the same price, show a single value.</li>
+                    <li><strong>Specifications:</strong> Collect all unique values from variants, sort them logically, and present with "or" separators</li>
+                    <li><strong>Multiple Values:</strong> Join with commas, placing "or" before the last item (e.g., "A, B, or C")</li>
+                    <li><strong>Two Values:</strong> Simply join with "or" (e.g., "A or B")</li>
+                    <li><strong>Single Value:</strong> Display without separators</li>
+                </ul>
 
-                <!-- Ratings Section -->
-                <div class="ratings-section">
-                    <div class="rating-card expert-rating">
-                        <div class="rating-header">
-                            <span class="rating-icon expert-icon">✓</span>
-                            <span class="rating-title">Expert Rating</span>
-                        </div>
-                        <div class="rating-value">Very Good</div>
-                        <div class="rating-count">4 Reviews</div>
-                        <div class="rating-gauge">
-                            <div class="gauge-background"></div>
-                            <div class="gauge-needle expert-needle"></div>
-                        </div>
+                <h4>Price Display</h4>
+                <ul>
+                    <li><strong>Format:</strong> Australian dollar format with no decimal places (e.g., "$52,990")</li>
+                    <li><strong>Single Price:</strong> Display as "$XX,XXX" when all variants have the same price</li>
+                    <li><strong>Price Range:</strong> Display as "$XX,XXX - $XX,XXX" when prices vary across variants</li>
+                    <li><strong>No Price:</strong> Display "Price TBA" when price data is unavailable or zero</li>
+                    <li><strong>Locale:</strong> Uses Australian number formatting (<code>en-AU</code>)</li>
+                </ul>
+
+                <h4>Transmission Display</h4>
+                <ul>
+                    <li><strong>Electric Vehicles:</strong> When transmission has 1 speed and vehicle is electric → display as "Single-Speed Auto"</li>
+                    <li><strong>CVT:</strong> When transmission speeds = "Variable" → display as "Auto (CVT)"</li>
+                    <li><strong>DCT:</strong> When transmission description contains "dual clutch" or "DCT" → display as "[X]-speed Auto (DCT)"</li>
+                    <li><strong>Standard Automatic:</strong> Display as "[X]-speed auto" (lowercase "auto")</li>
+                    <li><strong>Manual:</strong> Display as "[X]-speed manual"</li>
+                    <li><strong>Educational Tooltips:</strong> CVT, DCT, and Single-Speed Auto include hover tooltips (see below)</li>
+                </ul>
+
+                <h4>Tooltip Text Examples</h4>
+                <div class="tooltip-examples">
+                    <div class="tooltip-example">
+                        <strong>CVT Tooltip:</strong>
+                        <p>"Continuously Variable Transmission - uses a belt-and-pulley system instead of traditional gears for seamless acceleration. Optimised for fuel efficiency and smooth power delivery."</p>
                     </div>
-
-                    <div class="rating-card owner-rating">
-                        <div class="rating-header">
-                            <span class="rating-title">Owner Rating</span>
-                        </div>
-                        <div class="rating-value">Very Good</div>
-                        <div class="rating-count">200 Reviews</div>
-                        <div class="rating-gauge">
-                            <div class="gauge-background"></div>
-                            <div class="gauge-needle owner-needle"></div>
-                        </div>
+                    <div class="tooltip-example">
+                        <strong>DCT Tooltip:</strong>
+                        <p>"Dual-Clutch Transmission - combines the efficiency of a manual gearbox with the convenience of an automatic. Delivers faster, smoother gear changes, particularly noticeable in sportier driving."</p>
+                    </div>
+                    <div class="tooltip-example">
+                        <strong>Single-Speed Auto Tooltip:</strong>
+                        <p>"Electric vehicles use a single-speed transmission as the electric motor delivers power efficiently across all speeds without needing multiple gears."</p>
                     </div>
                 </div>
 
-                <!-- Bottom Section - Call to Action and Related Content -->
-                <section class="bottom-section">
-                    <div class="action-card save-card">
-                        <h3 class="action-title">Save Thousands on a new Ford Ranger</h3>
-                        <p class="action-description">CarExpert does the hard work to get you the best price. No negotiating, no hidden costs, just expert help and real savings on your next new car.</p>
-                        <button class="action-button">Find a deal</button>
-                    </div>
+                <h4>Fuel Type Display</h4>
+                <p>Fuel type displays the actual fuel(s) the vehicle uses, sourced from <code>fuelType</code> and <code>fuel.fuelOtherFuelType</code>:</p>
+                <ul>
+                    <li><strong>Plug-in Hybrid Vehicles:</strong> Display both fuel types as "[Primary]/[Secondary]" (e.g., "Electric/Premium Unleaded")</li>
+                    <li><strong>Hybrid Vehicles:</strong> Display both fuel types as "[Primary]/[Secondary]" if <code>fuelOtherFuelType</code> is valid</li>
+                    <li><strong>Pure Electric/Combustion:</strong> Display only the primary <code>fuelType</code> (e.g., "Electric", "Unleaded", "Diesel")</li>
+                    <li><strong>Data Validation:</strong> Filter out "None" values from <code>fuelOtherFuelType</code> to prevent displaying invalid data</li>
+                    <li><strong>Sort Order:</strong> When multiple fuel types exist across variants: Petrol → Unleaded → Diesel → LPG → Hybrid → Plug-in Hybrid → Electric</li>
+                </ul>
 
-                    <div class="cards-container">
-                        <div class="action-card news-card">
-                            <div class="card-background" style="background-image: url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&h=300&fit=crop&crop=center')"></div>
-                            <div class="card-overlay">
-                                <span class="card-title">News</span>
-                                <span class="card-arrow">→</span>
-                            </div>
-                        </div>
+                <h4>Powertrain Type Display</h4>
+                <p>The Powertrain Type field classifies the vehicle's propulsion system. This is distinct from Fuel Type:</p>
+                <ul>
+                    <li><code>Battery Electric Vehicle</code> → "Electric"</li>
+                    <li><code>Hybrid Electric Vehicle</code> → "Hybrid"</li>
+                    <li><code>Plug-in Hybrid Electric Vehicle</code> / <code>Plug-In Hybrid Electric Vehicle</code> → "PHEV"</li>
+                    <li><code>Combustion</code> → "Combustion"</li>
+                    <li><strong>Case Handling:</strong> Supports both "Plug-in" and "Plug-In" (capital I) variants for data compatibility</li>
+                    <li><strong>Key Difference:</strong> Powertrain Type = vehicle classification; Fuel Type = what fuels the vehicle</li>
+                </ul>
 
-                        <div class="action-card reviews-card">
-                            <div class="card-background" style="background-image: url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&h=300&fit=crop&crop=center')"></div>
-                            <div class="card-overlay">
-                                <span class="card-title">Reviews</span>
-                                <span class="card-arrow">→</span>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </main>
-    </div>
-
-    <!-- Documentation Section -->
-    <section class="documentation-section">
-        <div class="documentation-container">
-            <h2 class="documentation-title">Proof of Concept: Specifications Display Rules & Logic</h2>
-            
-            <div class="documentation-grid">
-                <!-- Overview Card -->
-                <div class="doc-card">
-                    <h3 class="doc-card-title">Concept Overview</h3>
-                    <p class="doc-card-text">
-                        This proof of concept demonstrates how to display aggregated vehicle data across all variants of a model. Rather than showing individual trim levels separately, the page presents a unified view with ranges and options, helping users understand the full scope of what's available for a vehicle model.
-                    </p>
-                </div>
-
-                <!-- Aggregation Rules Card -->
-                <div class="doc-card">
-                    <h3 class="doc-card-title">Aggregation Rules</h3>
-                    <ul class="doc-card-list">
-                        <li><strong>Price Range:</strong> Display minimum to maximum across all variants. If all variants have the same price, show a single value.</li>
-                        <li><strong>Specifications:</strong> Collect all unique values from variants, sort them logically, and present with "or" separators</li>
-                        <li><strong>Multiple Values:</strong> Join with commas, placing "or" before the last item (e.g., "A, B, or C")</li>
-                        <li><strong>Two Values:</strong> Simply join with "or" (e.g., "A or B")</li>
-                        <li><strong>Single Value:</strong> Display without separators</li>
-                    </ul>
-                </div>
-
-                <!-- Transmission Formatting Card -->
-                <div class="doc-card">
-                    <h3 class="doc-card-title">Transmission Display Rules</h3>
-                    <ul class="doc-card-list">
-                        <li><strong>Electric Vehicles:</strong> When transmission has 1 speed and vehicle is electric → display as "Single-Speed Auto"</li>
-                        <li><strong>CVT:</strong> When transmission speeds = "Variable" → display as "Auto (CVT)"</li>
-                        <li><strong>DCT:</strong> When transmission description contains "dual clutch" or "DCT" → display as "[X]-speed Auto (DCT)"</li>
-                        <li><strong>Standard Automatic:</strong> Display as "[X]-speed auto" (lowercase "auto")</li>
-                        <li><strong>Manual:</strong> Display as "[X]-speed manual"</li>
-                        <li><strong>Educational Tooltips:</strong> CVT, DCT, and Single-Speed Auto include hover tooltips explaining the technology to users</li>
-                    </ul>
-                </div>
-
-                <!-- Fuel Type Display Card -->
-                <div class="doc-card">
-                    <h3 class="doc-card-title">Fuel Type Display Rules</h3>
-                    <p class="doc-card-text">
-                        Fuel type displays the actual fuel(s) the vehicle uses, sourced from <code>fuelType</code> and <code>fuel.fuelOtherFuelType</code>:
-                    </p>
-                    <ul class="doc-card-list">
-                        <li><strong>Plug-in Hybrid Vehicles:</strong> Display both fuel types as "[Primary]/[Secondary]" (e.g., "Electric/Premium Unleaded")</li>
-                        <li><strong>Hybrid Vehicles:</strong> Display both fuel types as "[Primary]/[Secondary]" if <code>fuelOtherFuelType</code> is valid</li>
-                        <li><strong>Pure Electric/Combustion:</strong> Display only the primary <code>fuelType</code> (e.g., "Electric", "Unleaded", "Diesel")</li>
-                        <li><strong>Data Validation:</strong> Filter out "None" values from <code>fuelOtherFuelType</code> to prevent displaying invalid data</li>
-                        <li><strong>Sort Order:</strong> When multiple fuel types exist across variants: Petrol → Unleaded → Diesel → LPG → Hybrid → Plug-in Hybrid → Electric</li>
-                        <li><strong>Powertrain vs Fuel:</strong> This field shows what you put in the tank. See "Powertrain Type" for vehicle classification (PHEV, HEV, etc.)</li>
-                    </ul>
-                </div>
-
-                <!-- Powertrain Display Card -->
-                <div class="doc-card">
-                    <h3 class="doc-card-title">Powertrain Type Display Rules</h3>
-                    <p class="doc-card-text">
-                        The Powertrain Type field classifies the vehicle's propulsion system. This is distinct from Fuel Type:
-                    </p>
-                    <ul class="doc-card-list">
-                        <li><code>Battery Electric Vehicle</code> → "Electric"</li>
-                        <li><code>Hybrid Electric Vehicle</code> → "Hybrid"</li>
-                        <li><code>Plug-in Hybrid Electric Vehicle</code> / <code>Plug-In Hybrid Electric Vehicle</code> → "PHEV"</li>
-                        <li><code>Combustion</code> → "Combustion"</li>
-                        <li><strong>Case Handling:</strong> Supports both "Plug-in" and "Plug-In" (capital I) variants for maximum data compatibility</li>
-                        <li><strong>Key Difference:</strong> Powertrain Type = vehicle classification; Fuel Type = what fuels the vehicle</li>
-                        <li>Other values display as-is</li>
-                    </ul>
-                </div>
-
-                <!-- UI Interactions Card -->
-                <div class="doc-card">
-                    <h3 class="doc-card-title">UI Interaction Patterns</h3>
-                    <ul class="doc-card-list">
-                        <li><strong>Read More Toggle:</strong> Expands description and temporarily hides specifications to reduce visual clutter</li>
-                        <li><strong>Transmission Tooltips:</strong> Hover state on CVT, DCT, and Single-Speed Auto provides educational context</li>
-                        <li><strong>Tooltip Positioning:</strong> Dynamically adjusts to stay within viewport boundaries</li>
-                    </ul>
-                </div>
-
-                <!-- Price Display Card -->
-                <div class="doc-card">
-                    <h3 class="doc-card-title">Price Display Rules</h3>
-                    <ul class="doc-card-list">
-                        <li><strong>Format:</strong> Australian dollar format with no decimal places (e.g., "$52,990")</li>
-                        <li><strong>Single Price:</strong> Display as "$XX,XXX" when all variants have the same price</li>
-                        <li><strong>Price Range:</strong> Display as "$XX,XXX - $XX,XXX" when prices vary across variants</li>
-                        <li><strong>No Price:</strong> Display "Price TBA" when price data is unavailable or zero</li>
-                        <li><strong>Locale:</strong> Uses Australian number formatting (<code>en-AU</code>)</li>
-                    </ul>
-                </div>
-
-                <!-- Vehicle Naming Card -->
-                <div class="doc-card">
-                    <h3 class="doc-card-title">Vehicle Naming Rules</h3>
-                    <ul class="doc-card-list">
-                        <li><strong>Page Title (H1):</strong> Use <code>displayNameFull</code> for the main heading (e.g., "Ford Ranger")</li>
-                        <li><strong>Breadcrumb Make:</strong> Use <code>make</code> field for the manufacturer breadcrumb</li>
-                        <li><strong>Breadcrumb Model:</strong> Use <code>displayNameShort</code> for the model breadcrumb, fallback to <code>model</code></li>
-                        <li><strong>Fallback:</strong> If <code>displayNameFull</code> is missing, construct from <code>make</code> + <code>model</code></li>
-                        <li><strong>Data Source:</strong> Name fields are extracted from the first vehicle variant in the dataset</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="documentation-footer">
-                <p class="doc-footer-text">
-                    <strong>Note:</strong> This is a proof of concept demonstrating display rules and aggregation logic. Production implementation will use different data sources and loading mechanisms, but should maintain these formatting and aggregation rules for consistency across the platform.
-                </p>
-            </div>
+                <h4>Vehicle Naming</h4>
+                <ul>
+                    <li><strong>Vehicle Title:</strong> Use <code>displayNameFull</code> for the main heading (e.g., "Ford Ranger")</li>
+                    <li><strong>Fallback:</strong> If <code>displayNameFull</code> is missing, construct from <code>make</code> + <code>model</code></li>
+                    <li><strong>Data Source:</strong> Name fields are extracted from the first vehicle variant in the dataset</li>
+                </ul>
+            </section>
         </div>
-    </section>
+    </div>
 
     <script src="hero-script.js"></script>
 </body>
