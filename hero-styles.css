@@ -306,10 +306,6 @@ body {
 
 /* Resources Section */
 .resources-section {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
-    border: 1px solid rgba(102, 126, 234, 0.2);
-    border-radius: 8px;
-    padding: 1.5rem;
     margin: 1.5rem 0 2rem 0;
 }
 
@@ -328,6 +324,14 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+}
+
+.documentation-section .resource-links li {
+    padding-left: 0;
+}
+
+.documentation-section .resource-links li:before {
+    content: none;
 }
 
 .resource-link {
