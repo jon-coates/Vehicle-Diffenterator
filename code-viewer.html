@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Viewer - hero-script.js</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            background: #2d2d30;
+            padding: 20px 30px;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #969696;
+            font-size: 14px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #969696;
+            font-size: 13px;
+        }
+
+        .file-icon {
+            font-size: 16px;
+        }
+
+        .copy-button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .copy-button:hover {
+            background: #1177bb;
+        }
+
+        .copy-button:active {
+            background: #0d5689;
+        }
+
+        .copy-button.copied {
+            background: #107c10;
+        }
+
+        .code-container {
+            padding: 30px;
+            overflow-x: auto;
+            background: #1e1e1e;
+        }
+
+        pre {
+            margin: 0 !important;
+            background: #1e1e1e !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+            overflow: visible !important;
+        }
+
+        pre[class*="language-"] {
+            padding-left: 3.8em !important;
+            position: relative;
+        }
+
+        .line-numbers .line-numbers-rows {
+            position: absolute;
+            pointer-events: none;
+            top: 0;
+            left: 0;
+            width: 3em;
+            letter-spacing: -1px;
+            border-right: 1px solid #3e3e42;
+            user-select: none;
+            padding: 0 0.8em 0 0;
+        }
+
+        .line-numbers-rows > span {
+            display: block;
+            counter-increment: linenumber;
+        }
+
+        .line-numbers-rows > span:before {
+            content: counter(linenumber);
+            color: #858585;
+            display: block;
+            padding-right: 0.8em;
+            text-align: right;
+        }
+
+        code {
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #d4d4d4;
+            background: #1e1e1e;
+        }
+
+        /* Syntax Highlighting Colors - VS Code Dark+ Theme */
+        .token.comment,
+        .token.prolog,
+        .token.doctype,
+        .token.cdata {
+            color: #6a9955;
+            font-style: italic;
+        }
+
+        .token.punctuation {
+            color: #d4d4d4;
+        }
+
+        .token.property,
+        .token.tag,
+        .token.boolean,
+        .token.number,
+        .token.constant,
+        .token.symbol,
+        .token.deleted {
+            color: #b5cea8;
+        }
+
+        .token.selector,
+        .token.attr-name,
+        .token.string,
+        .token.char,
+        .token.builtin,
+        .token.inserted {
+            color: #ce9178;
+        }
+
+        .token.operator,
+        .token.entity,
+        .token.url,
+        .language-css .token.string,
+        .style .token.string {
+            color: #d4d4d4;
+        }
+
+        .token.atrule,
+        .token.attr-value,
+        .token.keyword {
+            color: #c586c0;
+        }
+
+        .token.function,
+        .token.class-name {
+            color: #dcdcaa;
+        }
+
+        .token.regex,
+        .token.important,
+        .token.variable {
+            color: #4fc1ff;
+        }
+
+        .token.important,
+        .token.bold {
+            font-weight: bold;
+        }
+
+        .token.italic {
+            font-style: italic;
+        }
+
+        .token.entity {
+            cursor: help;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 30px;
+            color: #969696;
+            font-size: 16px;
+        }
+
+        .error {
+            text-align: center;
+            padding: 60px 30px;
+            color: #f48771;
+            font-size: 16px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #4fc1ff;
+            text-decoration: none;
+            font-size: 13px;
+            margin-top: 12px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #75bfff;
+            text-decoration: underline;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #424242;
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4e4e4e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>JavaScript Implementation</h1>
+            <p>Aggregation and display logic for vehicle specifications</p>
+            <a href="vehicle-hero.html" class="back-link">← Back to Vehicle Specifications</a>
+        </div>
+        
+        <div class="toolbar">
+            <div class="file-info">
+                <span class="file-icon">📄</span>
+                <span id="filename">hero-script.js</span>
+                <span id="line-count"></span>
+            </div>
+            <button class="copy-button" onclick="copyCode()">Copy Code</button>
+        </div>
+
+        <div class="code-container">
+            <div id="loading" class="loading">Loading code...</div>
+            <pre id="code-block" style="display: none;"><code id="code-content" class="language-javascript line-numbers"></code></pre>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" />
+
+    <script>
+        let codeText = '';
+
+        async function loadCode() {
+            try {
+                // Get filename from URL parameter, default to hero-script.js
+                const urlParams = new URLSearchParams(window.location.search);
+                const filename = urlParams.get('file') || 'hero-script.js';
+                
+                document.getElementById('filename').textContent = filename;
+                document.title = `Code Viewer - ${filename}`;
+
+                const response = await fetch(filename);
+                if (!response.ok) {
+                    throw new Error(`Failed to load ${filename}`);
+                }
+                
+                codeText = await response.text();
+                
+                // Count lines
+                const lineCount = codeText.split('\n').length;
+                document.getElementById('line-count').textContent = `${lineCount} lines`;
+                
+                // Display code with syntax highlighting
+                const codeContent = document.getElementById('code-content');
+                codeContent.textContent = codeText;
+                
+                // Hide loading, show code
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('code-block').style.display = 'block';
+                
+                // Apply syntax highlighting
+                Prism.highlightElement(codeContent);
+                
+            } catch (error) {
+                document.getElementById('loading').className = 'error';
+                document.getElementById('loading').textContent = `Error: ${error.message}`;
+                console.error('Error loading code:', error);
+            }
+        }
+
+        async function copyCode() {
+            const button = document.querySelector('.copy-button');
+            try {
+                await navigator.clipboard.writeText(codeText);
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = 'Copy Code';
+                    button.classList.remove('copied');
+                }, 2000);
+            } catch (error) {
+                console.error('Failed to copy:', error);
+                button.textContent = 'Copy Failed';
+                setTimeout(() => {
+                    button.textContent = 'Copy Code';
+                }, 2000);
+            }
+        }
+
+        // Load code when page loads
+        loadCode();
+    </script>
+</body>
+</html>
+
