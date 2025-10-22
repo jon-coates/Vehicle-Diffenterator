@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Code Viewer - hero-script.js</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
     <style>
         * {
             margin: 0;
@@ -93,125 +93,52 @@
         }
 
         .code-container {
-            padding: 30px;
-            overflow-x: auto;
             background: #1e1e1e;
+            overflow-x: auto;
         }
 
         pre {
             margin: 0 !important;
             background: #1e1e1e !important;
-            padding: 0 !important;
+            padding: 20px 30px !important;
             border-radius: 0 !important;
-            overflow: visible !important;
         }
 
-        pre[class*="language-"] {
-            padding-left: 3.8em !important;
-            position: relative;
-        }
-
-        .line-numbers .line-numbers-rows {
-            position: absolute;
-            pointer-events: none;
-            top: 0;
-            left: 0;
-            width: 3em;
-            letter-spacing: -1px;
-            border-right: 1px solid #3e3e42;
-            user-select: none;
-            padding: 0 0.8em 0 0;
-        }
-
-        .line-numbers-rows > span {
-            display: block;
-            counter-increment: linenumber;
-        }
-
-        .line-numbers-rows > span:before {
-            content: counter(linenumber);
-            color: #858585;
-            display: block;
-            padding-right: 0.8em;
-            text-align: right;
-        }
-
-        code {
+        pre code {
             font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
             font-size: 13px;
-            line-height: 1.6;
-            color: #d4d4d4;
-            background: #1e1e1e;
+            line-height: 1.8;
+            display: block;
+            background: #1e1e1e !important;
+            padding: 0 !important;
         }
 
-        /* Syntax Highlighting Colors - VS Code Dark+ Theme */
-        .token.comment,
-        .token.prolog,
-        .token.doctype,
-        .token.cdata {
-            color: #6a9955;
-            font-style: italic;
+        /* Line numbers */
+        .hljs {
+            padding-left: 0 !important;
         }
 
-        .token.punctuation {
-            color: #d4d4d4;
+        code.hljs {
+            counter-reset: line;
         }
 
-        .token.property,
-        .token.tag,
-        .token.boolean,
-        .token.number,
-        .token.constant,
-        .token.symbol,
-        .token.deleted {
-            color: #b5cea8;
+        code.hljs .line {
+            counter-increment: line;
+            display: block;
+            position: relative;
+            padding-left: 4.5em;
         }
 
-        .token.selector,
-        .token.attr-name,
-        .token.string,
-        .token.char,
-        .token.builtin,
-        .token.inserted {
-            color: #ce9178;
-        }
-
-        .token.operator,
-        .token.entity,
-        .token.url,
-        .language-css .token.string,
-        .style .token.string {
-            color: #d4d4d4;
-        }
-
-        .token.atrule,
-        .token.attr-value,
-        .token.keyword {
-            color: #c586c0;
-        }
-
-        .token.function,
-        .token.class-name {
-            color: #dcdcaa;
-        }
-
-        .token.regex,
-        .token.important,
-        .token.variable {
-            color: #4fc1ff;
-        }
-
-        .token.important,
-        .token.bold {
-            font-weight: bold;
-        }
-
-        .token.italic {
-            font-style: italic;
-        }
-
-        .token.entity {
-            cursor: help;
+        code.hljs .line:before {
+            content: counter(line);
+            position: absolute;
+            left: 0;
+            width: 3.5em;
+            text-align: right;
+            padding-right: 1em;
+            color: #858585;
+            border-right: 1px solid #3e3e42;
+            user-select: none;
         }
 
         .loading {
@@ -283,14 +210,11 @@
 
         <div class="code-container">
             <div id="loading" class="loading">Loading code...</div>
-            <pre id="code-block" style="display: none;"><code id="code-content" class="language-javascript line-numbers"></code></pre>
+            <pre id="code-block" style="display: none;"><code id="code-content" class="language-javascript hljs"></code></pre>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
     <script>
         let codeText = '';
@@ -315,22 +239,32 @@
                 const lineCount = codeText.split('\n').length;
                 document.getElementById('line-count').textContent = `${lineCount} lines`;
                 
-                // Display code with syntax highlighting
+                // Wrap each line in a span for line numbering
+                const lines = codeText.split('\n');
+                const wrappedCode = lines.map(line => `<span class="line">${escapeHtml(line)}</span>`).join('\n');
+                
+                // Display code
                 const codeContent = document.getElementById('code-content');
-                codeContent.textContent = codeText;
+                codeContent.innerHTML = wrappedCode;
+                
+                // Apply syntax highlighting
+                hljs.highlightElement(codeContent);
                 
                 // Hide loading, show code
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('code-block').style.display = 'block';
-                
-                // Apply syntax highlighting
-                Prism.highlightElement(codeContent);
                 
             } catch (error) {
                 document.getElementById('loading').className = 'error';
                 document.getElementById('loading').textContent = `Error: ${error.message}`;
                 console.error('Error loading code:', error);
             }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         async function copyCode() {
@@ -358,4 +292,3 @@
     </script>
 </body>
 </html>
-
