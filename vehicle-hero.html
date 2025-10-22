@@ -27,31 +27,34 @@
             <!-- Left Column - Vehicle Information -->
             <div class="hero-left">
                 <div class="vehicle-header">
-                    <div class="title-container">
-                        <h1 class="vehicle-title" id="vehicle-title">Loading...</h1>
-                        <div class="car-selector">
-                            <button class="car-dropdown-toggle" onclick="toggleCarDropdown()">
-                                <span class="dropdown-arrow">▼</span>
-                            </button>
-                            <div class="car-dropdown" id="car-dropdown">
-                                <div class="dropdown-item" data-file="FDRA.json" onclick="selectVehicle('FDRA.json')">Ford Ranger</div>
-                                <div class="dropdown-item" data-file="fordTransit.json" onclick="selectVehicle('fordTransit.json')">Ford Transit</div>
-                                <div class="dropdown-item" data-file="bydSealion6.json" onclick="selectVehicle('bydSealion6.json')">BYD Sealion 6</div>
-                                <div class="dropdown-item" data-file="bydSealion7.json" onclick="selectVehicle('bydSealion7.json')">BYD Sealion 7</div>
-                                <div class="dropdown-item" data-file="hyKona.json" onclick="selectVehicle('hyKona.json')">Hyundai Kona</div>
-                                <div class="dropdown-item" data-file="mazda2.json" onclick="selectVehicle('mazda2.json')">Mazda 2</div>
-                                <div class="dropdown-item" data-file="allJuke.json" onclick="selectVehicle('allJuke.json')">Nissan Juke</div>
-                                <div class="dropdown-item" data-file="nissanPatrol.json" onclick="selectVehicle('nissanPatrol.json')">Nissan Patrol</div>
-                                <div class="dropdown-item" data-file="suzukiJimny.json" onclick="selectVehicle('suzukiJimny.json')">Suzuki Jimny</div>
-                                <div class="dropdown-item" data-file="teslamodely.json" onclick="selectVehicle('teslamodely.json')">Tesla Model Y</div>
-                                <div class="dropdown-item" data-file="rav4.json" onclick="selectVehicle('rav4.json')">Toyota RAV4</div>
-                            </div>
-                        </div>
-                    </div>
+                    <h1 class="vehicle-title" id="vehicle-title">Loading...</h1>
+                </div>
+                
+                <div class="button-group">
                     <button class="compare-button">
                         <span class="compare-icon">+</span>
-                        Compare
+                        <span>Compare</span>
                     </button>
+                    
+                    <div class="car-selector">
+                        <button class="car-dropdown-toggle" onclick="toggleCarDropdown()">
+                            <span>Sample data</span>
+                            <span class="dropdown-arrow">▼</span>
+                        </button>
+                        <div class="car-dropdown" id="car-dropdown">
+                            <div class="dropdown-item" data-file="FDRA.json" onclick="selectVehicle('FDRA.json')">Ford Ranger</div>
+                            <div class="dropdown-item" data-file="fordTransit.json" onclick="selectVehicle('fordTransit.json')">Ford Transit</div>
+                            <div class="dropdown-item" data-file="bydSealion6.json" onclick="selectVehicle('bydSealion6.json')">BYD Sealion 6</div>
+                            <div class="dropdown-item" data-file="bydSealion7.json" onclick="selectVehicle('bydSealion7.json')">BYD Sealion 7</div>
+                            <div class="dropdown-item" data-file="hyKona.json" onclick="selectVehicle('hyKona.json')">Hyundai Kona</div>
+                            <div class="dropdown-item" data-file="mazda2.json" onclick="selectVehicle('mazda2.json')">Mazda 2</div>
+                            <div class="dropdown-item" data-file="allJuke.json" onclick="selectVehicle('allJuke.json')">Nissan Juke</div>
+                            <div class="dropdown-item" data-file="nissanPatrol.json" onclick="selectVehicle('nissanPatrol.json')">Nissan Patrol</div>
+                            <div class="dropdown-item" data-file="suzukiJimny.json" onclick="selectVehicle('suzukiJimny.json')">Suzuki Jimny</div>
+                            <div class="dropdown-item" data-file="teslamodely.json" onclick="selectVehicle('teslamodely.json')">Tesla Model Y</div>
+                            <div class="dropdown-item" data-file="rav4.json" onclick="selectVehicle('rav4.json')">Toyota RAV4</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="vehicle-description">
@@ -145,19 +148,21 @@
                         <button class="action-button">Find a deal</button>
                     </div>
 
-                    <div class="action-card news-card">
-                        <div class="card-background" style="background-image: url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&h=300&fit=crop&crop=center')"></div>
-                        <div class="card-overlay">
-                            <span class="card-title">News</span>
-                            <span class="card-arrow">→</span>
+                    <div class="cards-container">
+                        <div class="action-card news-card">
+                            <div class="card-background" style="background-image: url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&h=300&fit=crop&crop=center')"></div>
+                            <div class="card-overlay">
+                                <span class="card-title">News</span>
+                                <span class="card-arrow">→</span>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="action-card reviews-card">
-                        <div class="card-background" style="background-image: url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&h=300&fit=crop&crop=center')"></div>
-                        <div class="card-overlay">
-                            <span class="card-title">Reviews</span>
-                            <span class="card-arrow">→</span>
+                        <div class="action-card reviews-card">
+                            <div class="card-background" style="background-image: url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&h=300&fit=crop&crop=center')"></div>
+                            <div class="card-overlay">
+                                <span class="card-title">Reviews</span>
+                                <span class="card-arrow">→</span>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -168,131 +173,116 @@
     <!-- Documentation Section -->
     <section class="documentation-section">
         <div class="documentation-container">
-            <h2 class="documentation-title">How This Works</h2>
+            <h2 class="documentation-title">Proof of Concept: Specifications Display Rules & Logic</h2>
             
             <div class="documentation-grid">
                 <!-- Overview Card -->
                 <div class="doc-card">
-                    <h3 class="doc-card-title">Overview</h3>
+                    <h3 class="doc-card-title">Concept Overview</h3>
                     <p class="doc-card-text">
-                        This vehicle hero page dynamically loads and displays vehicle data from JSON files. It aggregates information across all variants of a vehicle model to provide a comprehensive overview including price ranges, available transmissions, and specifications.
+                        This proof of concept demonstrates how to display aggregated vehicle data across all variants of a model. Rather than showing individual trim levels separately, the page presents a unified view with ranges and options, helping users understand the full scope of what's available for a vehicle model.
                     </p>
-                </div>
-
-                <!-- Data Loading Card -->
-                <div class="doc-card">
-                    <h3 class="doc-card-title">Data Loading</h3>
-                    <ul class="doc-card-list">
-                        <li>Vehicle data is fetched from <code>vehicleData/</code> directory</li>
-                        <li>Each JSON file contains an array of vehicle variants</li>
-                        <li>Data structure supports <code>data.vehicles</code>, <code>data.data</code>, or direct array format</li>
-                        <li>The first variant determines the vehicle name and make/model information</li>
-                    </ul>
                 </div>
 
                 <!-- Aggregation Rules Card -->
                 <div class="doc-card">
                     <h3 class="doc-card-title">Aggregation Rules</h3>
                     <ul class="doc-card-list">
-                        <li><strong>Price:</strong> Displays minimum to maximum across all variants. Shows single price if all variants are the same.</li>
-                        <li><strong>Transmission:</strong> Collects unique transmission types and formats them with "or" separator</li>
-                        <li><strong>Fuel Type:</strong> Formatted based on powertrain type, then sorted logically (Petrol → Diesel → Hybrid → Plug-in Hybrid → Electric)</li>
-                        <li><strong>Powertrain:</strong> Abbreviated display names (Electric, Hybrid, PHEV, Combustion)</li>
-                        <li><strong>Specifications:</strong> All unique values from variants are collected, sorted, and displayed with proper formatting</li>
-                        <li><strong>Body Types:</strong> Multiple body types are joined with commas and "or" before the last item</li>
+                        <li><strong>Price Range:</strong> Display minimum to maximum across all variants. If all variants have the same price, show a single value.</li>
+                        <li><strong>Specifications:</strong> Collect all unique values from variants, sort them logically, and present with "or" separators</li>
+                        <li><strong>Multiple Values:</strong> Join with commas, placing "or" before the last item (e.g., "A, B, or C")</li>
+                        <li><strong>Two Values:</strong> Simply join with "or" (e.g., "A or B")</li>
+                        <li><strong>Single Value:</strong> Display without separators</li>
                     </ul>
                 </div>
 
                 <!-- Transmission Formatting Card -->
                 <div class="doc-card">
-                    <h3 class="doc-card-title">Transmission Formatting</h3>
+                    <h3 class="doc-card-title">Transmission Display Rules</h3>
                     <ul class="doc-card-list">
-                        <li><strong>Electric Vehicles:</strong> Single-speed transmissions display as "Single-Speed Auto"</li>
-                        <li><strong>CVT:</strong> Variable-speed transmissions display as "Auto (CVT)" with tooltip</li>
-                        <li><strong>DCT:</strong> Dual-clutch transmissions show speed count + "Auto (DCT)" with tooltip</li>
-                        <li><strong>Standard:</strong> Format as "[X]-speed auto" or "[X]-speed manual"</li>
-                        <li>Tooltips provide educational context for special transmission types</li>
+                        <li><strong>Electric Vehicles:</strong> When transmission has 1 speed and vehicle is electric → display as "Single-Speed Auto"</li>
+                        <li><strong>CVT:</strong> When transmission speeds = "Variable" → display as "Auto (CVT)"</li>
+                        <li><strong>DCT:</strong> When transmission description contains "dual clutch" or "DCT" → display as "[X]-speed Auto (DCT)"</li>
+                        <li><strong>Standard Automatic:</strong> Display as "[X]-speed auto" (lowercase "auto")</li>
+                        <li><strong>Manual:</strong> Display as "[X]-speed manual"</li>
+                        <li><strong>Educational Tooltips:</strong> CVT, DCT, and Single-Speed Auto include hover tooltips explaining the technology to users</li>
                     </ul>
                 </div>
 
                 <!-- Fuel Type Display Card -->
                 <div class="doc-card">
-                    <h3 class="doc-card-title">Fuel Type Display</h3>
+                    <h3 class="doc-card-title">Fuel Type Display Rules</h3>
                     <p class="doc-card-text">
-                        Fuel types are intelligently formatted based on powertrain (user-friendly full names):
+                        Fuel type displays the actual fuel(s) the vehicle uses, sourced from <code>fuelType</code> and <code>fuel.fuelOtherFuelType</code>:
                     </p>
                     <ul class="doc-card-list">
-                        <li><strong>Electric vehicles:</strong> Display as "Electric"</li>
-                        <li><strong>Hybrid vehicles:</strong> Display as "Hybrid"</li>
-                        <li><strong>Plug-in hybrids:</strong> Display as "Plug-in Hybrid" (full name)</li>
-                        <li><strong>Combustion vehicles:</strong> Show actual fuel type (Petrol, Diesel, Unleaded, LPG)</li>
-                        <li>Multiple fuel types are sorted logically: Petrol → Diesel → LPG → Hybrid → Plug-in Hybrid → Electric</li>
+                        <li><strong>Plug-in Hybrid Vehicles:</strong> Display both fuel types as "[Primary]/[Secondary]" (e.g., "Electric/Premium Unleaded")</li>
+                        <li><strong>Hybrid Vehicles:</strong> Display both fuel types as "[Primary]/[Secondary]" if <code>fuelOtherFuelType</code> is valid</li>
+                        <li><strong>Pure Electric/Combustion:</strong> Display only the primary <code>fuelType</code> (e.g., "Electric", "Unleaded", "Diesel")</li>
+                        <li><strong>Data Validation:</strong> Filter out "None" values from <code>fuelOtherFuelType</code> to prevent displaying invalid data</li>
+                        <li><strong>Sort Order:</strong> When multiple fuel types exist across variants: Petrol → Unleaded → Diesel → LPG → Hybrid → Plug-in Hybrid → Electric</li>
+                        <li><strong>Powertrain vs Fuel:</strong> This field shows what you put in the tank. See "Powertrain Type" for vehicle classification (PHEV, HEV, etc.)</li>
                     </ul>
                 </div>
 
                 <!-- Powertrain Display Card -->
                 <div class="doc-card">
-                    <h3 class="doc-card-title">Powertrain Display</h3>
+                    <h3 class="doc-card-title">Powertrain Type Display Rules</h3>
                     <p class="doc-card-text">
-                        Powertrain types use abbreviated names for brevity:
+                        The Powertrain Type field classifies the vehicle's propulsion system. This is distinct from Fuel Type:
                     </p>
                     <ul class="doc-card-list">
                         <li><code>Battery Electric Vehicle</code> → "Electric"</li>
                         <li><code>Hybrid Electric Vehicle</code> → "Hybrid"</li>
-                        <li><code>Plug-in Hybrid Electric Vehicle</code> → "PHEV" (abbreviated)</li>
+                        <li><code>Plug-in Hybrid Electric Vehicle</code> / <code>Plug-In Hybrid Electric Vehicle</code> → "PHEV"</li>
                         <li><code>Combustion</code> → "Combustion"</li>
+                        <li><strong>Case Handling:</strong> Supports both "Plug-in" and "Plug-In" (capital I) variants for maximum data compatibility</li>
+                        <li><strong>Key Difference:</strong> Powertrain Type = vehicle classification; Fuel Type = what fuels the vehicle</li>
+                        <li>Other values display as-is</li>
                     </ul>
                 </div>
 
                 <!-- UI Interactions Card -->
                 <div class="doc-card">
-                    <h3 class="doc-card-title">UI Interactions</h3>
+                    <h3 class="doc-card-title">UI Interaction Patterns</h3>
                     <ul class="doc-card-list">
-                        <li><strong>Vehicle Selector:</strong> Dropdown next to title allows switching between available vehicles</li>
-                        <li><strong>Read More:</strong> Expands description and temporarily hides specifications grid</li>
-                        <li><strong>Image Navigation:</strong> Left/right arrows cycle through available images</li>
-                        <li><strong>Tooltips:</strong> Hover over transmission values with special types to see explanations</li>
-                        <li><strong>Dropdown:</strong> Closes automatically when clicking outside the selector area</li>
+                        <li><strong>Vehicle Selector:</strong> Dropdown allows switching between models to preview different data sets in the POC</li>
+                        <li><strong>Read More Toggle:</strong> Expands description and temporarily hides specifications to reduce visual clutter</li>
+                        <li><strong>Image Navigation:</strong> Arrow buttons cycle through available vehicle images</li>
+                        <li><strong>Transmission Tooltips:</strong> Hover state on CVT, DCT, and Single-Speed Auto provides educational context</li>
+                        <li><strong>Tooltip Positioning:</strong> Dynamically adjusts to stay within viewport boundaries</li>
+                        <li><strong>Dropdown Closure:</strong> Automatically closes when clicking outside the selector area</li>
                     </ul>
                 </div>
 
-                <!-- Data Requirements Card -->
+                <!-- Price Display Card -->
                 <div class="doc-card">
-                    <h3 class="doc-card-title">Data Requirements</h3>
-                    <p class="doc-card-text">
-                        <strong>Required Fields:</strong> Each vehicle variant should include:
-                    </p>
+                    <h3 class="doc-card-title">Price Display Rules</h3>
                     <ul class="doc-card-list">
-                        <li><code>make</code>, <code>model</code> - Basic identification</li>
-                        <li><code>modelDetails.displayNameFull</code> - Full display name for H1</li>
-                        <li><code>modelDetails.displayNameShort</code> - Short name for breadcrumb</li>
-                        <li><code>price</code> - Retail price (0 = TBA)</li>
-                        <li><code>transmissionType</code>, <code>transmissionNumberOfSpeeds</code> - Transmission details</li>
-                        <li><code>transmissionDescription</code> - Optional, used to detect DCT</li>
-                        <li><code>drivenWheels</code> - Drive configuration (FWD, RWD, AWD, 4x4)</li>
-                        <li><code>fuelType</code> - Raw fuel type (used for combustion vehicles)</li>
-                        <li><code>powertrainType</code> - Critical for fuel type and powertrain display</li>
-                        <li><code>bodyType</code> - Vehicle body style</li>
+                        <li><strong>Format:</strong> Australian dollar format with no decimal places (e.g., "$52,990")</li>
+                        <li><strong>Single Price:</strong> Display as "$XX,XXX" when all variants have the same price</li>
+                        <li><strong>Price Range:</strong> Display as "$XX,XXX - $XX,XXX" when prices vary across variants</li>
+                        <li><strong>No Price:</strong> Display "Price TBA" when price data is unavailable or zero</li>
+                        <li><strong>Locale:</strong> Uses Australian number formatting (<code>en-AU</code>)</li>
                     </ul>
                 </div>
 
-                <!-- Technical Notes Card -->
+                <!-- Vehicle Naming Card -->
                 <div class="doc-card">
-                    <h3 class="doc-card-title">Technical Notes</h3>
+                    <h3 class="doc-card-title">Vehicle Naming Rules</h3>
                     <ul class="doc-card-list">
-                        <li>All global functions use <code>async/await</code> for data loading</li>
-                        <li>Price formatting uses Australian locale (<code>en-AU</code>)</li>
-                        <li>Tooltip positioning dynamically adjusts to viewport boundaries</li>
-                        <li>Event delegation prevents memory leaks when updating transmission tooltips</li>
-                        <li>Selected vehicle in dropdown is marked with <code>.selected</code> class</li>
-                        <li>Default vehicle (Ford Ranger) loads on page initialisation</li>
+                        <li><strong>Page Title (H1):</strong> Use <code>displayNameFull</code> for the main heading (e.g., "Ford Ranger")</li>
+                        <li><strong>Breadcrumb Make:</strong> Use <code>make</code> field for the manufacturer breadcrumb</li>
+                        <li><strong>Breadcrumb Model:</strong> Use <code>displayNameShort</code> for the model breadcrumb, fallback to <code>model</code></li>
+                        <li><strong>Fallback:</strong> If <code>displayNameFull</code> is missing, construct from <code>make</code> + <code>model</code></li>
+                        <li><strong>Data Source:</strong> Name fields are extracted from the first vehicle variant in the dataset</li>
                     </ul>
                 </div>
             </div>
 
             <div class="documentation-footer">
                 <p class="doc-footer-text">
-                    <strong>Adding New Vehicles:</strong> Place JSON file in <code>vehicleData/</code> directory and add a corresponding dropdown item in the HTML with the correct <code>data-file</code> attribute and <code>onclick</code> handler.
+                    <strong>Note:</strong> This is a proof of concept demonstrating display rules and aggregation logic. Production implementation will use different data sources and loading mechanisms, but should maintain these formatting and aggregation rules for consistency across the platform.
                 </p>
             </div>
         </div>

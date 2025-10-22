@@ -225,32 +225,29 @@ function formatTransmission(vehicle) {
     return null;
 }
 
-// Format fuel type for display - prioritizes powertrain type for hybrids/EVs
+// Format fuel type for display - shows actual fuel types
 function formatFuelType(vehicle) {
-    const { powertrainType, fuelType } = vehicle;
+    const { powertrainType, fuelType, fuel } = vehicle;
+    const otherFuelType = fuel?.fuelOtherFuelType;
     
-    // For hybrid and electric vehicles, show the powertrain type instead
-    if (powertrainType) {
-        switch (powertrainType) {
-            case "Battery Electric Vehicle":
-                return "Electric";
-            case "Hybrid Electric Vehicle":
-                return "Hybrid";
-            case "Plug-in Hybrid Electric Vehicle":
-                return "Plug-in Hybrid";
-            case "Combustion":
-                // For combustion, use the actual fuel type
-                if (fuelType) {
-                    return fuelType;
-                }
-                return "Petrol"; // Default
-            default:
-                // Unknown powertrain, use fuel type if available
-                return fuelType || powertrainType;
+    // Check if otherFuelType is valid (not "None" or empty)
+    const hasValidOtherFuelType = otherFuelType && otherFuelType !== "None";
+    
+    // For plug-in hybrids, show both fuel types
+    if (powertrainType === "Plug-in Hybrid Electric Vehicle" || powertrainType === "Plug-In Hybrid Electric Vehicle") {
+        if (fuelType && hasValidOtherFuelType) {
+            return `${fuelType}/${otherFuelType}`;
         }
     }
     
-    // Fallback to fuel type if no powertrain type
+    // For regular hybrids, show both fuel types if available
+    if (powertrainType === "Hybrid Electric Vehicle") {
+        if (fuelType && hasValidOtherFuelType) {
+            return `${fuelType}/${otherFuelType}`;
+        }
+    }
+    
+    // For pure electric or combustion, just show the fuel type
     return fuelType || null;
 }
 
@@ -266,6 +263,7 @@ function formatPowertrain(vehicle) {
         case "Hybrid Electric Vehicle":
             return "Hybrid";
         case "Plug-in Hybrid Electric Vehicle":
+        case "Plug-In Hybrid Electric Vehicle":
             return "PHEV";
         case "Combustion":
             return "Combustion";
@@ -485,7 +483,7 @@ function addTransmissionTooltips() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
     // Load default vehicle (Ford Ranger)
-    const defaultVehicle = 'FDRA.json';
+    const defaultVehicle = 'hyKona.json';
     await loadVehicleData(defaultVehicle);
     
     // Mark the current vehicle as selected in dropdown
