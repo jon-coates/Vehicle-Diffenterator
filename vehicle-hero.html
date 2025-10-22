@@ -165,6 +165,139 @@
         </main>
     </div>
 
+    <!-- Documentation Section -->
+    <section class="documentation-section">
+        <div class="documentation-container">
+            <h2 class="documentation-title">How This Works</h2>
+            
+            <div class="documentation-grid">
+                <!-- Overview Card -->
+                <div class="doc-card">
+                    <h3 class="doc-card-title">Overview</h3>
+                    <p class="doc-card-text">
+                        This vehicle hero page dynamically loads and displays vehicle data from JSON files. It aggregates information across all variants of a vehicle model to provide a comprehensive overview including price ranges, available transmissions, and specifications.
+                    </p>
+                </div>
+
+                <!-- Data Loading Card -->
+                <div class="doc-card">
+                    <h3 class="doc-card-title">Data Loading</h3>
+                    <ul class="doc-card-list">
+                        <li>Vehicle data is fetched from <code>vehicleData/</code> directory</li>
+                        <li>Each JSON file contains an array of vehicle variants</li>
+                        <li>Data structure supports <code>data.vehicles</code>, <code>data.data</code>, or direct array format</li>
+                        <li>The first variant determines the vehicle name and make/model information</li>
+                    </ul>
+                </div>
+
+                <!-- Aggregation Rules Card -->
+                <div class="doc-card">
+                    <h3 class="doc-card-title">Aggregation Rules</h3>
+                    <ul class="doc-card-list">
+                        <li><strong>Price:</strong> Displays minimum to maximum across all variants. Shows single price if all variants are the same.</li>
+                        <li><strong>Transmission:</strong> Collects unique transmission types and formats them with "or" separator</li>
+                        <li><strong>Fuel Type:</strong> Formatted based on powertrain type, then sorted logically (Petrol → Diesel → Hybrid → Plug-in Hybrid → Electric)</li>
+                        <li><strong>Powertrain:</strong> Abbreviated display names (Electric, Hybrid, PHEV, Combustion)</li>
+                        <li><strong>Specifications:</strong> All unique values from variants are collected, sorted, and displayed with proper formatting</li>
+                        <li><strong>Body Types:</strong> Multiple body types are joined with commas and "or" before the last item</li>
+                    </ul>
+                </div>
+
+                <!-- Transmission Formatting Card -->
+                <div class="doc-card">
+                    <h3 class="doc-card-title">Transmission Formatting</h3>
+                    <ul class="doc-card-list">
+                        <li><strong>Electric Vehicles:</strong> Single-speed transmissions display as "Single-Speed Auto"</li>
+                        <li><strong>CVT:</strong> Variable-speed transmissions display as "Auto (CVT)" with tooltip</li>
+                        <li><strong>DCT:</strong> Dual-clutch transmissions show speed count + "Auto (DCT)" with tooltip</li>
+                        <li><strong>Standard:</strong> Format as "[X]-speed auto" or "[X]-speed manual"</li>
+                        <li>Tooltips provide educational context for special transmission types</li>
+                    </ul>
+                </div>
+
+                <!-- Fuel Type Display Card -->
+                <div class="doc-card">
+                    <h3 class="doc-card-title">Fuel Type Display</h3>
+                    <p class="doc-card-text">
+                        Fuel types are intelligently formatted based on powertrain (user-friendly full names):
+                    </p>
+                    <ul class="doc-card-list">
+                        <li><strong>Electric vehicles:</strong> Display as "Electric"</li>
+                        <li><strong>Hybrid vehicles:</strong> Display as "Hybrid"</li>
+                        <li><strong>Plug-in hybrids:</strong> Display as "Plug-in Hybrid" (full name)</li>
+                        <li><strong>Combustion vehicles:</strong> Show actual fuel type (Petrol, Diesel, Unleaded, LPG)</li>
+                        <li>Multiple fuel types are sorted logically: Petrol → Diesel → LPG → Hybrid → Plug-in Hybrid → Electric</li>
+                    </ul>
+                </div>
+
+                <!-- Powertrain Display Card -->
+                <div class="doc-card">
+                    <h3 class="doc-card-title">Powertrain Display</h3>
+                    <p class="doc-card-text">
+                        Powertrain types use abbreviated names for brevity:
+                    </p>
+                    <ul class="doc-card-list">
+                        <li><code>Battery Electric Vehicle</code> → "Electric"</li>
+                        <li><code>Hybrid Electric Vehicle</code> → "Hybrid"</li>
+                        <li><code>Plug-in Hybrid Electric Vehicle</code> → "PHEV" (abbreviated)</li>
+                        <li><code>Combustion</code> → "Combustion"</li>
+                    </ul>
+                </div>
+
+                <!-- UI Interactions Card -->
+                <div class="doc-card">
+                    <h3 class="doc-card-title">UI Interactions</h3>
+                    <ul class="doc-card-list">
+                        <li><strong>Vehicle Selector:</strong> Dropdown next to title allows switching between available vehicles</li>
+                        <li><strong>Read More:</strong> Expands description and temporarily hides specifications grid</li>
+                        <li><strong>Image Navigation:</strong> Left/right arrows cycle through available images</li>
+                        <li><strong>Tooltips:</strong> Hover over transmission values with special types to see explanations</li>
+                        <li><strong>Dropdown:</strong> Closes automatically when clicking outside the selector area</li>
+                    </ul>
+                </div>
+
+                <!-- Data Requirements Card -->
+                <div class="doc-card">
+                    <h3 class="doc-card-title">Data Requirements</h3>
+                    <p class="doc-card-text">
+                        <strong>Required Fields:</strong> Each vehicle variant should include:
+                    </p>
+                    <ul class="doc-card-list">
+                        <li><code>make</code>, <code>model</code> - Basic identification</li>
+                        <li><code>modelDetails.displayNameFull</code> - Full display name for H1</li>
+                        <li><code>modelDetails.displayNameShort</code> - Short name for breadcrumb</li>
+                        <li><code>price</code> - Retail price (0 = TBA)</li>
+                        <li><code>transmissionType</code>, <code>transmissionNumberOfSpeeds</code> - Transmission details</li>
+                        <li><code>transmissionDescription</code> - Optional, used to detect DCT</li>
+                        <li><code>drivenWheels</code> - Drive configuration (FWD, RWD, AWD, 4x4)</li>
+                        <li><code>fuelType</code> - Raw fuel type (used for combustion vehicles)</li>
+                        <li><code>powertrainType</code> - Critical for fuel type and powertrain display</li>
+                        <li><code>bodyType</code> - Vehicle body style</li>
+                    </ul>
+                </div>
+
+                <!-- Technical Notes Card -->
+                <div class="doc-card">
+                    <h3 class="doc-card-title">Technical Notes</h3>
+                    <ul class="doc-card-list">
+                        <li>All global functions use <code>async/await</code> for data loading</li>
+                        <li>Price formatting uses Australian locale (<code>en-AU</code>)</li>
+                        <li>Tooltip positioning dynamically adjusts to viewport boundaries</li>
+                        <li>Event delegation prevents memory leaks when updating transmission tooltips</li>
+                        <li>Selected vehicle in dropdown is marked with <code>.selected</code> class</li>
+                        <li>Default vehicle (Ford Ranger) loads on page initialisation</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="documentation-footer">
+                <p class="doc-footer-text">
+                    <strong>Adding New Vehicles:</strong> Place JSON file in <code>vehicleData/</code> directory and add a corresponding dropdown item in the HTML with the correct <code>data-file</code> attribute and <code>onclick</code> handler.
+                </p>
+            </div>
+        </div>
+    </section>
+
     <script src="hero-script.js"></script>
 </body>
 </html>

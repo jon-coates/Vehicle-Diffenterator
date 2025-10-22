@@ -29,7 +29,7 @@ body {
 
 /* Hero Container */
 .hero-container {
-    min-height: 100vh;
+    /* min-height: 100vh; */
     padding: 2rem;
     max-width: 1400px;
     margin: 0 auto;
@@ -730,6 +730,147 @@ body {
     line-height: 1.5;
 }
 
+/* Documentation Section */
+.documentation-section {
+    background: #ffffff;
+    padding: 4rem 2rem;
+    margin-top: 4rem;
+    border-top: 1px solid #e5e5e5;
+}
+
+.documentation-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.documentation-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #0f0f0f;
+    margin-bottom: 2.5rem;
+    text-align: center;
+}
+
+.documentation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.doc-card {
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    transition: var(--transition);
+}
+
+.doc-card:hover {
+    border-color: var(--accent-red);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.doc-card-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #0f0f0f;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent-red);
+}
+
+.doc-card-text {
+    color: #333333;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    margin-bottom: 0.75rem;
+}
+
+.doc-card-list {
+    list-style: none;
+    padding: 0;
+}
+
+.doc-card-list li {
+    color: #333333;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    margin-bottom: 0.75rem;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.doc-card-list li:before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent-red);
+    font-weight: 600;
+}
+
+.doc-card-list code,
+.doc-card-text code,
+.doc-footer-text code {
+    background: rgba(220, 38, 38, 0.08);
+    color: var(--accent-red);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    border: 1px solid rgba(220, 38, 38, 0.15);
+}
+
+.documentation-footer {
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.doc-footer-text {
+    color: #333333;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    margin: 0;
+}
+
+.doc-footer-text strong {
+    color: #0f0f0f;
+}
+
+/* Responsive adjustments for documentation */
+@media (max-width: 1024px) {
+    .documentation-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .documentation-section {
+        padding: 3rem 1.5rem;
+    }
+    
+    .documentation-title {
+        font-size: 2rem;
+    }
+    
+    .documentation-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+    
+    .doc-card {
+        padding: 1.25rem;
+    }
+    
+    .doc-card-title {
+        font-size: 1.2rem;
+    }
+}
+
 @media (max-width: 480px) {
     .specifications-grid {
         grid-template-columns: 1fr 1fr;
@@ -746,5 +887,19 @@ body {
     .tooltip {
         max-width: 250px;
         font-size: 0.85rem;
+    }
+    
+    .documentation-title {
+        font-size: 1.75rem;
+    }
+    
+    .doc-card-title {
+        font-size: 1.1rem;
+    }
+    
+    .doc-card-text,
+    .doc-card-list li,
+    .doc-footer-text {
+        font-size: 0.9rem;
     }
 }

@@ -164,9 +164,10 @@ function aggregateVehicleData(vehicles) {
             drivenWheels.add(vehicle.drivenWheels);
         }
         
-        // Collect fuel types
-        if (vehicle.fuelType) {
-            fuelTypes.add(vehicle.fuelType);
+        // Collect fuel types - use formatted powertrain for hybrids/EVs
+        const fuelTypeDisplay = formatFuelType(vehicle);
+        if (fuelTypeDisplay) {
+            fuelTypes.add(fuelTypeDisplay);
         }
         
         // Collect body types
@@ -185,7 +186,7 @@ function aggregateVehicleData(vehicles) {
         priceRange: formatPriceRange(prices),
         transmissions: Array.from(transmissions).sort(),
         drivenWheels: Array.from(drivenWheels).sort(),
-        fuelTypes: Array.from(fuelTypes).sort(),
+        fuelTypes: sortFuelTypes(Array.from(fuelTypes)),
         bodyTypes: Array.from(bodyTypes).sort(),
         powertrainTypes: Array.from(powertrainTypes).sort()
     };
@@ -224,6 +225,35 @@ function formatTransmission(vehicle) {
     return null;
 }
 
+// Format fuel type for display - prioritizes powertrain type for hybrids/EVs
+function formatFuelType(vehicle) {
+    const { powertrainType, fuelType } = vehicle;
+    
+    // For hybrid and electric vehicles, show the powertrain type instead
+    if (powertrainType) {
+        switch (powertrainType) {
+            case "Battery Electric Vehicle":
+                return "Electric";
+            case "Hybrid Electric Vehicle":
+                return "Hybrid";
+            case "Plug-in Hybrid Electric Vehicle":
+                return "Plug-in Hybrid";
+            case "Combustion":
+                // For combustion, use the actual fuel type
+                if (fuelType) {
+                    return fuelType;
+                }
+                return "Petrol"; // Default
+            default:
+                // Unknown powertrain, use fuel type if available
+                return fuelType || powertrainType;
+        }
+    }
+    
+    // Fallback to fuel type if no powertrain type
+    return fuelType || null;
+}
+
 // Format powertrain type
 function formatPowertrain(vehicle) {
     const { powertrainType, fuelType } = vehicle;
@@ -234,7 +264,7 @@ function formatPowertrain(vehicle) {
         case "Battery Electric Vehicle":
             return "Electric";
         case "Hybrid Electric Vehicle":
-            return "HEV";
+            return "Hybrid";
         case "Plug-in Hybrid Electric Vehicle":
             return "PHEV";
         case "Combustion":
@@ -242,6 +272,27 @@ function formatPowertrain(vehicle) {
         default:
             return powertrainType;
     }
+}
+
+// Sort fuel types in a logical order
+function sortFuelTypes(types) {
+    const order = ['Petrol', 'Unleaded', 'Diesel', 'LPG', 'Hybrid', 'Plug-in Hybrid', 'Electric'];
+    return types.sort((a, b) => {
+        const aIndex = order.indexOf(a);
+        const bIndex = order.indexOf(b);
+        
+        // If both are in the order, sort by order
+        if (aIndex !== -1 && bIndex !== -1) {
+            return aIndex - bIndex;
+        }
+        
+        // If only one is in the order, prioritize it
+        if (aIndex !== -1) return -1;
+        if (bIndex !== -1) return 1;
+        
+        // If neither is in the order, sort alphabetically
+        return a.localeCompare(b);
+    });
 }
 
 // Format price range
