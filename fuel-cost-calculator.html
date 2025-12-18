@@ -184,31 +184,6 @@
             color: var(--brand-red);
         }
 
-        .calculate-button {
-            width: 100%;
-            padding: 1rem;
-            background: #000000;
-            color: white;
-            border: none;
-            border-radius: var(--border-radius-sm);
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            margin-top: 1rem;
-        }
-
-        .calculate-button:hover:not(:disabled) {
-            background: #333333;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .calculate-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
         .results-panel {
             display: none;
         }
@@ -1070,6 +1045,269 @@
                 margin: 0.5rem 0;
             }
         }
+
+        .view-switcher {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            align-items: center;
+        }
+
+        .view-switcher-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            background: var(--background-white);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: var(--font-family);
+        }
+
+        .view-switcher-btn:hover {
+            border-color: var(--brand-red);
+            background: var(--background-light);
+        }
+
+        .view-switcher-btn.active {
+            background: var(--brand-red);
+            color: white;
+            border-color: var(--brand-red);
+        }
+
+        .results-column-container {
+            background: var(--background-white);
+            border-radius: var(--border-radius);
+            padding: 0;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .column-view-scroll-wrapper {
+            overflow-x: auto;
+            overflow-y: visible;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .column-view-grid {
+            display: grid;
+            /* Grid columns will be set dynamically via JavaScript */
+            min-width: max-content;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .column-view-label-cell {
+            padding: 1.25rem 1.5rem;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            border-bottom: 2px solid var(--border-color);
+            border-right: 2px solid var(--border-color);
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            left: 0;
+            z-index: 10;
+        }
+
+        .column-view-vehicle-cell {
+            padding: 1.5rem 1.5rem;
+            border-bottom: 1px solid #f3f4f6;
+            border-right: 2px solid var(--border-color);
+            background: var(--background-white);
+            position: sticky;
+            left: 0;
+            z-index: 5;
+        }
+
+        .column-view-vehicle-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .column-view-vehicle-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            line-height: 1.3;
+        }
+
+        .column-view-vehicle-year {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .column-view-vehicle-accent {
+            height: 3px;
+            width: 100%;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+        }
+
+        .column-view-header-row {
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        }
+
+        .column-view-header-cell {
+            padding: 1.25rem 1rem;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            border-bottom: 2px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            text-align: center;
+            position: relative;
+        }
+
+        .column-view-header-cell:last-child {
+            border-right: none;
+        }
+
+        .column-view-header-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .column-view-header-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 1rem;
+            line-height: 1.3;
+        }
+
+        .column-view-header-year {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .column-view-header-accent {
+            height: 3px;
+            width: 100%;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+        }
+
+        .column-view-data-cell {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid #f3f4f6;
+            border-right: 1px solid #f3f4f6;
+            color: var(--text-secondary);
+            vertical-align: top;
+            text-align: center;
+            transition: all 0.2s ease;
+            background: var(--background-white);
+        }
+
+        .column-view-data-cell:last-child {
+            border-right: none;
+        }
+
+        .column-view-label-cell:last-of-type {
+            border-right: 2px solid var(--border-color);
+        }
+
+        .column-view-row:hover .column-view-data-cell {
+            background: #fafafa;
+        }
+
+        .column-view-data-cell.cheapest-cell {
+            background: linear-gradient(to right, #f0fdf4 0%, #ffffff 3%);
+        }
+
+        .column-view-label-cell.cheapest-label {
+            background: linear-gradient(to right, #f0fdf4 0%, #ffffff 3%);
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .column-view-data-cell.expensive-cell {
+            background: linear-gradient(to right, #fef2f2 0%, #ffffff 3%);
+        }
+
+        .column-view-label-cell.expensive-label {
+            background: linear-gradient(to right, #fef2f2 0%, #ffffff 3%);
+            border-left: 4px solid var(--accent-red);
+        }
+
+        .column-view-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .column-view-total-cost {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--brand-red);
+        }
+
+        .column-view-total-cost.cheapest {
+            color: var(--accent-green);
+        }
+
+        .column-view-total-cost.expensive {
+            color: var(--accent-red);
+        }
+
+        .column-view-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.175rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-top: 0.5rem;
+        }
+
+        .column-view-badge.cheapest {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .column-view-badge.expensive {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .column-view-grid {
+                grid-template-columns: auto repeat(2, minmax(200px, 1fr));
+            }
+
+            .column-view-label-cell {
+                padding: 1rem 1rem;
+                font-size: 0.8rem;
+            }
+
+            .column-view-header-cell {
+                padding: 1rem 0.75rem;
+            }
+
+            .column-view-header-name {
+                font-size: 0.9rem;
+            }
+
+            .column-view-data-cell {
+                padding: 1rem 0.75rem;
+                font-size: 0.85rem;
+            }
+
+            .column-view-price {
+                font-size: 1rem;
+            }
+
+            .column-view-total-cost {
+                font-size: 1.25rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1195,8 +1433,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <button id="calculate-button" class="calculate-button">Calculate Fuel Cost</button>
                     </div>
 
                     <!-- Loading State -->
@@ -1242,13 +1478,18 @@
                             </div>
                         </div>
 
+                        <div class="view-switcher">
+                            <button class="view-switcher-btn active" data-view="table" id="view-table-btn">Table View</button>
+                            <button class="view-switcher-btn" data-view="columns" id="view-columns-btn">Column View</button>
+                        </div>
+
                         <div class="filter-controls">
                             <label for="variant-filter" class="filter-label">Filter Variants:</label>
                             <input type="text" id="variant-filter" class="filter-input" placeholder="Search by trim, fuel type, transmission...">
                             <span class="filter-count" id="filter-count"></span>
                         </div>
 
-                        <div class="results-table-container">
+                        <div class="results-table-container" id="results-table-container">
                             <table class="results-table" id="results-table">
                                 <thead>
                                     <tr>
@@ -1264,6 +1505,14 @@
                                     <!-- Table rows will be populated here -->
                                 </tbody>
                             </table>
+                        </div>
+
+                        <div class="results-column-container" id="results-column-container" style="display: none;">
+                            <div class="column-view-scroll-wrapper">
+                                <div class="column-view-grid" id="column-view-grid">
+                                    <!-- Column view will be populated here -->
+                                </div>
+                            </div>
                         </div>
                     </div>
 

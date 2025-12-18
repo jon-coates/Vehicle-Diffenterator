@@ -7,6 +7,7 @@ class FuelCostCalculator {
         this.currentCalculations = [];
         this.selectedVehicles = new Set(); // Set of selected vehicle filenames
         this.allVehiclesEfficiencyCache = null; // Cache for all vehicles' efficiency data
+        this.currentView = 'table'; // Current view: 'table' or 'columns'
         this.vehicleList = [
             { filename: 'bydSealion6.json', name: 'BYD Sealion 6' },
             { filename: 'bydSealion7.json', name: 'BYD Sealion 7' },
@@ -108,9 +109,6 @@ class FuelCostCalculator {
         
         // Load the default vehicle data
         this.loadSelectedVehicles();
-        
-        // Enable calculate button since we have defaults
-        this.enableCalculateButton();
         
         // Update distance displays
         this.updateDistanceDisplays();
@@ -254,7 +252,6 @@ class FuelCostCalculator {
             radio.addEventListener('change', (e) => {
                 this.updateDrivingTypeControls();
                 this.updateDistanceDisplays();
-                this.enableCalculateButton();
                 if (this.canCalculate()) {
                     this.calculateFuelCosts();
                 }
@@ -265,7 +262,6 @@ class FuelCostCalculator {
         const countrySlider = document.getElementById('country-slider');
         countrySlider.addEventListener('input', (e) => {
             this.updateSliderValues(e.target.value);
-            this.enableCalculateButton();
             if (this.canCalculate()) {
                 this.calculateFuelCosts();
             }
@@ -278,7 +274,6 @@ class FuelCostCalculator {
             radio.addEventListener('change', (e) => {
                 this.updateCalculationTypeControls();
                 this.updateDistanceDisplays();
-                this.enableCalculateButton();
                 if (this.canCalculate()) {
                     this.calculateFuelCosts();
                 }
@@ -288,7 +283,6 @@ class FuelCostCalculator {
         // Input fields - auto-calculate on change
         document.getElementById('distance-input').addEventListener('input', () => {
             this.updateDistanceDisplays();
-            this.enableCalculateButton();
             if (this.canCalculate()) {
                 this.calculateFuelCosts();
             }
@@ -297,49 +291,75 @@ class FuelCostCalculator {
         document.getElementById('weekly-distance-input').addEventListener('input', () => {
             this.updateAnnualDistanceDisplay();
             this.updateDistanceDisplays();
-            this.enableCalculateButton();
             if (this.canCalculate()) {
                 this.calculateFuelCosts();
             }
         });
 
         document.getElementById('unleaded-cost-input').addEventListener('input', () => {
-            this.enableCalculateButton();
             if (this.canCalculate()) {
                 this.calculateFuelCosts();
             }
         });
 
         document.getElementById('premium-unleaded-cost-input').addEventListener('input', () => {
-            this.enableCalculateButton();
             if (this.canCalculate()) {
                 this.calculateFuelCosts();
             }
         });
 
         document.getElementById('diesel-cost-input').addEventListener('input', () => {
-            this.enableCalculateButton();
             if (this.canCalculate()) {
                 this.calculateFuelCosts();
             }
         });
 
         document.getElementById('kwh-cost-input').addEventListener('input', () => {
-            this.enableCalculateButton();
             if (this.canCalculate()) {
                 this.calculateFuelCosts();
             }
-        });
-
-        // Calculate button
-        document.getElementById('calculate-button').addEventListener('click', () => {
-            this.calculateFuelCosts();
         });
 
         // Variant filter
         document.getElementById('variant-filter').addEventListener('input', (e) => {
             this.filterVariants(e.target.value);
         });
+
+        // View switcher buttons
+        document.getElementById('view-table-btn').addEventListener('click', () => {
+            this.switchView('table');
+        });
+
+        document.getElementById('view-columns-btn').addEventListener('click', () => {
+            this.switchView('columns');
+        });
+    }
+
+    switchView(view) {
+        this.currentView = view;
+        
+        // Update button states
+        document.getElementById('view-table-btn').classList.toggle('active', view === 'table');
+        document.getElementById('view-columns-btn').classList.toggle('active', view === 'columns');
+        
+        // Toggle visibility of containers
+        const tableContainer = document.getElementById('results-table-container');
+        const columnContainer = document.getElementById('results-column-container');
+        
+        if (view === 'table') {
+            if (tableContainer) tableContainer.style.display = 'block';
+            if (columnContainer) columnContainer.style.display = 'none';
+        } else {
+            if (tableContainer) tableContainer.style.display = 'none';
+            if (columnContainer) columnContainer.style.display = 'block';
+        }
+        
+        // Re-render current results in the selected view
+        if (this.currentCalculations.length > 0) {
+            const calcType = document.querySelector('input[name="calculation-type"]:checked').value;
+            const distance = this.getDistance();
+            this.displayResults(this.currentCalculations, distance, calcType);
+        }
     }
 
     updateDrivingTypeControls() {
@@ -402,38 +422,12 @@ class FuelCostCalculator {
         document.getElementById('annual-distance-display').textContent = this.formatNumber(annualDistance);
     }
 
-    enableCalculateButton() {
-        const distanceInput = document.getElementById('distance-input');
-        const weeklyDistanceInput = document.getElementById('weekly-distance-input');
-        const unleadedCostInput = document.getElementById('unleaded-cost-input');
-        const premiumUnleadedCostInput = document.getElementById('premium-unleaded-cost-input');
-        const dieselCostInput = document.getElementById('diesel-cost-input');
-        const kwhCostInput = document.getElementById('kwh-cost-input');
-        const calculateButton = document.getElementById('calculate-button');
-        const calcType = document.querySelector('input[name="calculation-type"]:checked').value;
-
-        // Check if at least one vehicle is selected
-        const hasVehicle = this.selectedVehicles.size > 0;
-        
-        const hasDistance = calcType === 'single' 
-            ? (distanceInput.value && this.parseNumberInput(distanceInput.value) > 0)
-            : (weeklyDistanceInput.value && this.parseNumberInput(weeklyDistanceInput.value) > 0);
-        const hasUnleadedCost = unleadedCostInput.value && this.parseNumberInput(unleadedCostInput.value) > 0;
-        const hasPremiumUnleadedCost = premiumUnleadedCostInput.value && this.parseNumberInput(premiumUnleadedCostInput.value) > 0;
-        const hasDieselCost = dieselCostInput.value && this.parseNumberInput(dieselCostInput.value) > 0;
-        const hasKwhCost = kwhCostInput.value && this.parseNumberInput(kwhCostInput.value) > 0;
-        const hasAtLeastOneCost = hasUnleadedCost || hasPremiumUnleadedCost || hasDieselCost || hasKwhCost;
-
-        calculateButton.disabled = !(hasVehicle && hasDistance && hasAtLeastOneCost);
-    }
-
     async loadSelectedVehicles() {
         const selectedFilenames = Array.from(this.selectedVehicles);
         
         if (selectedFilenames.length === 0) {
             this.variants = [];
             this.hideResults();
-            this.enableCalculateButton();
             return;
         }
 
@@ -486,7 +480,6 @@ class FuelCostCalculator {
             }
 
             this.showLoading(false);
-            this.enableCalculateButton();
 
             // Auto-calculate after loading vehicle data
             if (this.canCalculate()) {
@@ -815,7 +808,8 @@ class FuelCostCalculator {
                     : (variant.fuelType || 'Unknown'),
                 isHybrid: fuelConsumptionRate !== null && electricConsumptionRate !== null,
                 isElectric: fuelConsumptionRate === null && electricConsumptionRate !== null,
-                isICE: fuelConsumptionRate !== null && electricConsumptionRate === null
+                isICE: fuelConsumptionRate !== null && electricConsumptionRate === null,
+                price: variant.price || null // Include vehicle price
             };
         }).filter(calc => calc.hasData); // Only include variants with valid data
 
@@ -833,16 +827,24 @@ class FuelCostCalculator {
     }
 
     displayResults(calculations, distance, calcType) {
-        const resultsPanel = document.getElementById('results-panel');
+        // Store calculations for filtering
+        this.currentCalculations = calculations;
+        
+        // Create summary (shared between both views)
+        this.createResultsSummary(calculations, calcType);
+        
+        // Display in the current view
+        if (this.currentView === 'columns') {
+            this.displayColumnView(calculations, distance, calcType);
+        } else {
+            this.displayTableView(calculations, distance, calcType);
+        }
+    }
+
+    createResultsSummary(calculations, calcType) {
         const resultsSummary = document.getElementById('results-summary');
-        const resultsTablePanel = document.getElementById('results-table-panel');
-        const resultsTableBody = document.getElementById('results-table-body');
-        const variantFilter = document.getElementById('variant-filter');
-
-        // Clear previous results and reset filter
-        resultsTableBody.innerHTML = '';
-        variantFilter.value = '';
-
+        const resultsPanel = document.getElementById('results-panel');
+        
         // Get selected vehicle names
         const selectedVehicleNames = Array.from(this.selectedVehicles)
             .map(filename => this.getVehicleNameFromFilename(filename));
@@ -925,6 +927,20 @@ class FuelCostCalculator {
                 </div>
             </div>
         `;
+        
+        // Show results panel
+        resultsPanel.classList.add('active');
+        this.hideError();
+    }
+
+    displayTableView(calculations, distance, calcType) {
+        const resultsTablePanel = document.getElementById('results-table-panel');
+        const resultsTableBody = document.getElementById('results-table-body');
+        const variantFilter = document.getElementById('variant-filter');
+
+        // Clear previous results and reset filter
+        resultsTableBody.innerHTML = '';
+        variantFilter.value = '';
 
         // Create table rows
         calculations.forEach((calc, index) => {
@@ -1028,17 +1044,218 @@ class FuelCostCalculator {
             resultsTableBody.appendChild(row);
         });
 
-        // Store calculations for filtering
-        this.currentCalculations = calculations;
-        
         // Update filter count
         this.updateFilterCount();
 
         // Show results
-        resultsPanel.classList.add('active');
         resultsTablePanel.style.display = 'block';
-        this.hideError();
         this.updateFilterCount();
+
+        // Display efficiency graph
+        this.displayEfficiencyGraph(calculations);
+    }
+
+    displayColumnView(calculations, distance, calcType) {
+        const resultsTablePanel = document.getElementById('results-table-panel');
+        const columnContainer = document.getElementById('results-column-container');
+        const columnGrid = document.getElementById('column-view-grid');
+
+        // Clear previous column view
+        columnGrid.innerHTML = '';
+        
+        // Set grid columns: 1 label column + number of vehicle columns
+        const numVehicles = calculations.length;
+        columnGrid.style.gridTemplateColumns = `auto repeat(${numVehicles}, minmax(200px, 1fr))`;
+        
+        // Define cost suffix based on calculation type
+        const costSuffix = calcType === 'annual' ? '/year' : '';
+
+        // Color palette for vehicle columns
+        const columnColors = [
+            '#06b6d4', // cyan
+            '#10b981', // green
+            '#f59e0b', // amber
+            '#8b5cf6', // purple
+            '#ec4899', // pink
+            '#3b82f6', // blue
+            '#84cc16', // lime
+            '#f97316', // orange
+            '#6366f1', // indigo
+            '#14b8a6', // teal
+            '#a855f7', // violet
+            '#ef4444'  // red
+        ];
+
+        // Determine cheapest and most expensive indices
+        const cheapestIndex = 0;
+        const mostExpensiveIndex = calculations.length - 1;
+
+        // Create header row - empty label cell + vehicle headers
+        // In CSS Grid, all cells must be direct children, so we add them directly to the grid
+        
+        // Empty label cell (first column, row 1)
+        const emptyLabelCell = document.createElement('div');
+        emptyLabelCell.className = 'column-view-label-cell';
+        columnGrid.appendChild(emptyLabelCell);
+
+        // Create header cell for each vehicle (columns 2+, row 1)
+        calculations.forEach((calc, index) => {
+            const variant = calc.variant;
+            const variantName = variant.trim || variant.versionName || 'Unknown Variant';
+            const makeModel = `${variant.make || ''} ${variant.model || ''}`.trim() || calc.vehicleName;
+            const year = variant.modelYear || '';
+            
+            const headerCell = document.createElement('div');
+            headerCell.className = 'column-view-header-cell';
+            
+            const color = columnColors[index % columnColors.length];
+            const isCheapest = index === cheapestIndex;
+            const isMostExpensive = index === mostExpensiveIndex;
+            
+            let badges = '';
+            if (isCheapest) badges += '<span class="column-view-badge cheapest">Cheapest</span>';
+            if (isMostExpensive && calculations.length > 1) badges += '<span class="column-view-badge expensive">Most Expensive</span>';
+            
+            headerCell.innerHTML = `
+                <div class="column-view-header-content">
+                    <div class="column-view-header-name">${variantName}</div>
+                    <div class="column-view-header-year">${year} ${makeModel}</div>
+                    <div class="column-view-header-accent" style="background-color: ${color};"></div>
+                    ${badges}
+                </div>
+            `;
+            
+            columnGrid.appendChild(headerCell);
+        });
+
+        // Create data rows: MSRP, Consumption, Energy Required, Cost per Unit, Total Cost
+        // Each row has: label cell (column 1) + data cells for each vehicle (columns 2+)
+        const rowLabels = [
+            { label: 'MSRP', key: 'price' },
+            { label: 'Consumption', key: 'consumption' },
+            { label: 'Energy Required', key: 'energy' },
+            { label: 'Cost per Unit', key: 'costPerUnit' },
+            { label: 'Total Cost', key: 'totalCost' }
+        ];
+
+        rowLabels.forEach((rowLabel, rowIndex) => {
+            // Determine if this row should have special styling
+            const isTotalCostRow = rowIndex === rowLabels.length - 1;
+
+            // Label cell (column 1 - leftmost)
+            const labelCell = document.createElement('div');
+            labelCell.className = 'column-view-label-cell';
+            labelCell.textContent = rowLabel.label;
+            if (isTotalCostRow) {
+                // Apply special styling classes to label cell for total cost row
+                calculations.forEach((calc, idx) => {
+                    if (idx === cheapestIndex) {
+                        labelCell.classList.add('cheapest-label');
+                    } else if (idx === mostExpensiveIndex && calculations.length > 1) {
+                        labelCell.classList.add('expensive-label');
+                    }
+                });
+            }
+            columnGrid.appendChild(labelCell);
+
+            // Data cells for each vehicle (columns 2+)
+            calculations.forEach((calc, vehicleIndex) => {
+                const dataCell = document.createElement('div');
+                dataCell.className = 'column-view-data-cell';
+                
+                // Apply row-level classes for styling
+                if (isTotalCostRow) {
+                    if (vehicleIndex === cheapestIndex) {
+                        dataCell.classList.add('cheapest-cell');
+                    } else if (vehicleIndex === mostExpensiveIndex && calculations.length > 1) {
+                        dataCell.classList.add('expensive-cell');
+                    }
+                }
+                
+                const isCheapest = vehicleIndex === cheapestIndex;
+                const isMostExpensive = vehicleIndex === mostExpensiveIndex;
+
+                switch (rowLabel.key) {
+                    case 'price':
+                        if (calc.price) {
+                            dataCell.innerHTML = `<div class="column-view-price">${this.formatCurrency(calc.price)}</div>`;
+                        } else {
+                            dataCell.textContent = 'N/A';
+                        }
+                        break;
+                    
+                    case 'consumption':
+                        let consumptionDisplay = '';
+                        if (calc.fuelConsumptionRate !== null) {
+                            consumptionDisplay += `${parseFloat(calc.fuelConsumptionRate.toFixed(2)).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L/100km`;
+                        }
+                        if (calc.electricConsumptionRate !== null) {
+                            if (consumptionDisplay) consumptionDisplay += '<br>';
+                            consumptionDisplay += `${parseFloat(calc.electricConsumptionRate.toFixed(2)).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh/100km`;
+                        }
+                        if (!consumptionDisplay) consumptionDisplay = 'N/A';
+                        dataCell.innerHTML = consumptionDisplay;
+                        break;
+                    
+                    case 'energy':
+                        let energyDisplay = '';
+                        if (calc.litresNeeded > 0) {
+                            energyDisplay += `${parseFloat(calc.litresNeeded.toFixed(2)).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L`;
+                        }
+                        if (calc.kwhNeeded > 0) {
+                            if (energyDisplay) energyDisplay += '<br>';
+                            energyDisplay += `${parseFloat(calc.kwhNeeded.toFixed(2)).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh`;
+                        }
+                        if (!energyDisplay) energyDisplay = 'N/A';
+                        dataCell.innerHTML = energyDisplay;
+                        break;
+                    
+                    case 'costPerUnit':
+                        let costPerUnitDisplay = '';
+                        if (calc.costPerLitre > 0) {
+                            costPerUnitDisplay += `${parseFloat(calc.costPerLitreCents.toFixed(1)).toLocaleString('en-AU', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} c/L<br><span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">(${calc.fuelType})</span>`;
+                        }
+                        if (calc.costPerKwh > 0) {
+                            if (costPerUnitDisplay) costPerUnitDisplay += '<br>';
+                            costPerUnitDisplay += `${this.formatCurrency(calc.costPerKwh)}/kWh`;
+                        }
+                        if (!costPerUnitDisplay) costPerUnitDisplay = 'N/A';
+                        dataCell.innerHTML = costPerUnitDisplay;
+                        break;
+                    
+                    case 'totalCost':
+                        let totalCostDisplay = '';
+                        let costClass = '';
+                        if (isCheapest) costClass = 'cheapest';
+                        else if (isMostExpensive && calculations.length > 1) costClass = 'expensive';
+                        
+                        if (calc.isHybrid) {
+                            totalCostDisplay = `<div class="column-view-total-cost ${costClass}">${this.formatCurrency(calc.totalCost)}${costSuffix}</div>`;
+                            totalCostDisplay += `<div style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-top: 0.25rem;">`;
+                            if (calc.fuelCost > 0) {
+                                totalCostDisplay += `Fuel: ${this.formatCurrency(calc.fuelCost)}`;
+                            }
+                            if (calc.fuelCost > 0 && calc.electricityCost > 0) {
+                                totalCostDisplay += ' + ';
+                            }
+                            if (calc.electricityCost > 0) {
+                                totalCostDisplay += `Electric: ${this.formatCurrency(calc.electricityCost)}`;
+                            }
+                            totalCostDisplay += `</div>`;
+                        } else {
+                            totalCostDisplay = `<div class="column-view-total-cost ${costClass}">${this.formatCurrency(calc.totalCost)}${costSuffix}</div>`;
+                        }
+                        dataCell.innerHTML = totalCostDisplay;
+                        break;
+                }
+                
+                columnGrid.appendChild(dataCell);
+            });
+        });
+
+        // Show results
+        resultsTablePanel.style.display = 'block';
+        columnContainer.style.display = 'block';
 
         // Display efficiency graph
         this.displayEfficiencyGraph(calculations);
@@ -1521,9 +1738,13 @@ class FuelCostCalculator {
     hideResults() {
         const resultsPanel = document.getElementById('results-panel');
         const resultsTablePanel = document.getElementById('results-table-panel');
+        const columnContainer = document.getElementById('results-column-container');
         const graphContainer = document.getElementById('efficiency-graph-container');
         resultsPanel.classList.remove('active');
         resultsTablePanel.style.display = 'none';
+        if (columnContainer) {
+            columnContainer.style.display = 'none';
+        }
         if (graphContainer) {
             graphContainer.style.display = 'none';
         }
