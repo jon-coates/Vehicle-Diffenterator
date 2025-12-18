@@ -642,6 +642,182 @@
             text-align: right;
         }
 
+        .efficiency-graph-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.5rem 0;
+        }
+
+        .efficiency-graph-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin: 0 0 1.5rem 0;
+        }
+
+        .efficiency-graph-box {
+            background: var(--background-light);
+            border-radius: var(--border-radius-sm);
+            padding: 2rem 1.5rem;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .efficiency-graph-label-left,
+        .efficiency-graph-label-right {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .efficiency-graph-label-left {
+            order: 1;
+        }
+
+        .efficiency-graph-label-right {
+            order: 3;
+        }
+
+        .efficiency-graph-line-container {
+            position: relative;
+            height: 60px;
+            flex: 1;
+            order: 2;
+        }
+
+        .efficiency-graph-line {
+            position: relative;
+            width: 100%;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            margin: 28px 0;
+        }
+
+        .efficiency-graph-dot {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transform: translate(-50%, -50%);
+            top: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            z-index: 10;
+        }
+
+        .efficiency-graph-dot:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 20;
+        }
+
+        .efficiency-graph-dot-group {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            z-index: 10;
+        }
+
+        .efficiency-graph-dot-group:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+            z-index: 20;
+        }
+
+        .efficiency-graph-dot-segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            border-radius: 50%;
+            border: 1px solid white;
+        }
+
+        .efficiency-graph-dot-segment:nth-child(1) {
+            top: 0;
+            left: 0;
+        }
+
+        .efficiency-graph-dot-segment:nth-child(2) {
+            top: 0;
+            right: 0;
+        }
+
+        .efficiency-graph-dot-segment:nth-child(3) {
+            bottom: 0;
+            left: 0;
+        }
+
+        .efficiency-graph-dot-segment:nth-child(4) {
+            bottom: 0;
+            right: 0;
+        }
+
+        .efficiency-graph-tooltip {
+            position: absolute;
+            background: var(--background-white);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            padding: 0.75rem 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            display: block;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            white-space: normal;
+            max-width: 300px;
+            min-width: 200px;
+        }
+
+        .efficiency-graph-tooltip.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .efficiency-graph-tooltip-value {
+            font-weight: 700;
+            color: var(--brand-red);
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--background-light);
+        }
+
+        .efficiency-graph-tooltip-vehicle {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            padding: 0.25rem 0;
+            line-height: 1.4;
+        }
+
+        .efficiency-histogram-bar {
+            position: absolute;
+            background: rgba(128, 128, 128, 0.12);
+            border-radius: 2px 2px 0 0;
+            pointer-events: none;
+            z-index: 1;
+            transition: opacity 0.2s ease;
+            bottom: 30px;
+        }
+
+        .efficiency-histogram-bar:hover {
+            opacity: 0.2;
+        }
+
         @media (max-width: 1200px) {
             .calculator-top {
                 grid-template-columns: 1fr;
@@ -866,6 +1042,33 @@
             .summary-vehicle-config {
                 font-size: 0.8rem;
             }
+
+            .efficiency-graph-box {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 1.5rem 1rem;
+            }
+
+            .efficiency-graph-label-left,
+            .efficiency-graph-label-right {
+                position: static;
+                order: 0;
+                margin-bottom: 0.5rem;
+            }
+
+            .efficiency-graph-label-left {
+                text-align: left;
+            }
+
+            .efficiency-graph-label-right {
+                text-align: right;
+                order: 3;
+            }
+
+            .efficiency-graph-line-container {
+                order: 2;
+                margin: 0.5rem 0;
+            }
         }
     </style>
 </head>
@@ -1024,6 +1227,21 @@
                 <!-- Bottom Section: Full Width Table -->
                 <div class="calculator-bottom">
                     <div class="calculator-panel" id="results-table-panel" style="display: none;">
+                        <!-- Fuel Efficiency Graph -->
+                        <div class="efficiency-graph-container" id="efficiency-graph-container" style="display: none;">
+                            <h3 class="efficiency-graph-title">Fuel Efficiency</h3>
+                            <p class="efficiency-graph-subtitle">Based on fuel and energy consumption rates</p>
+                            <div class="efficiency-graph-box">
+                                <div class="efficiency-graph-label-left">Least Efficient</div>
+                                <div class="efficiency-graph-line-container">
+                                    <div class="efficiency-graph-line" id="efficiency-graph-line">
+                                        <!-- Dots will be positioned here -->
+                                    </div>
+                                </div>
+                                <div class="efficiency-graph-label-right">Most Efficient</div>
+                            </div>
+                        </div>
+
                         <div class="filter-controls">
                             <label for="variant-filter" class="filter-label">Filter Variants:</label>
                             <input type="text" id="variant-filter" class="filter-input" placeholder="Search by trim, fuel type, transmission...">

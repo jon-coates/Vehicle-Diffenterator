@@ -6,6 +6,7 @@ class FuelCostCalculator {
         this.variants = []; // Array of {variant, vehicleName, filename}
         this.currentCalculations = [];
         this.selectedVehicles = new Set(); // Set of selected vehicle filenames
+        this.allVehiclesEfficiencyCache = null; // Cache for all vehicles' efficiency data
         this.vehicleList = [
             { filename: 'bydSealion6.json', name: 'BYD Sealion 6' },
             { filename: 'bydSealion7.json', name: 'BYD Sealion 7' },
@@ -1038,6 +1039,466 @@ class FuelCostCalculator {
         resultsTablePanel.style.display = 'block';
         this.hideError();
         this.updateFilterCount();
+
+        // Display efficiency graph
+        this.displayEfficiencyGraph(calculations);
+    }
+
+    async getAllVehiclesEfficiencyData() {
+        // Return cached data if available
+        if (this.allVehiclesEfficiencyCache !== null) {
+            return this.allVehiclesEfficiencyCache;
+        }
+
+        try {
+            // Load all vehicles in parallel
+            const loadPromises = this.vehicleList.map(async (vehicle) => {
+                // Use cached data if available
+                if (this.vehicleDataMap[vehicle.filename]) {
+                    return { filename: vehicle.filename, data: this.vehicleDataMap[vehicle.filename] };
+                }
+
+                // Otherwise, fetch it
+                try {
+                    const response = await fetch(`vehicleData/${vehicle.filename}`);
+                    if (!response.ok) {
+                        console.warn(`Failed to load ${vehicle.filename}`);
+                        return null;
+                    }
+                    const data = await response.json();
+                    this.vehicleDataMap[vehicle.filename] = data;
+                    return { filename: vehicle.filename, data };
+                } catch (error) {
+                    console.warn(`Error loading ${vehicle.filename}:`, error);
+                    return null;
+                }
+            });
+
+            const loadedVehicles = await Promise.all(loadPromises);
+            
+            // Extract efficiency data from all vehicles
+            const efficiencyData = [];
+            
+            loadedVehicles.forEach((result) => {
+                if (!result || !result.data) return;
+                
+                const vehicleName = this.getVehicleNameFromFilename(result.filename);
+                const variants = (result.data.data || []).map(item => item.vehicle || item).filter(vehicle => {
+                    return vehicle && vehicle.performance;
+                });
+                
+                variants.forEach(variant => {
+                    const fuelConsumptionRate = this.getFuelConsumptionRate(variant);
+                    const electricConsumptionRate = this.getElectricEnergyConsumptionRate(variant);
+                    
+                    // Calculate efficiency value using same logic as displayEfficiencyGraph
+                    let efficiencyValue = null;
+                    
+                    if (fuelConsumptionRate !== null && electricConsumptionRate !== null) {
+                        // Hybrid: use fuel consumption as primary metric
+                        efficiencyValue = fuelConsumptionRate;
+                    } else if (fuelConsumptionRate !== null) {
+                        efficiencyValue = fuelConsumptionRate;
+                    } else if (electricConsumptionRate !== null) {
+                        // Scale electric consumption for positioning
+                        efficiencyValue = electricConsumptionRate * 0.1;
+                    }
+                    
+                    if (efficiencyValue !== null) {
+                        efficiencyData.push({
+                            efficiencyValue: efficiencyValue,
+                            fuelConsumptionRate: fuelConsumptionRate,
+                            electricConsumptionRate: electricConsumptionRate,
+                            makeModel: `${variant.make || ''} ${variant.model || ''}`.trim() || vehicleName,
+                            variantName: variant.trim || variant.versionName || 'Unknown Variant',
+                            filename: result.filename,
+                            vehicleName: vehicleName
+                        });
+                    }
+                });
+            });
+
+            // Cache the results
+            this.allVehiclesEfficiencyCache = efficiencyData;
+            return efficiencyData;
+        } catch (error) {
+            console.error('Error loading all vehicles efficiency data:', error);
+            return [];
+        }
+    }
+
+    createHistogramBins(efficiencyData, numBins = 25) {
+        if (!efficiencyData || efficiencyData.length === 0) {
+            return [];
+        }
+
+        // Extract efficiency values
+        const efficiencyValues = efficiencyData.map(item => item.efficiencyValue).filter(val => val !== null);
+        
+        if (efficiencyValues.length === 0) {
+            return [];
+        }
+
+        // Find min and max across all vehicles
+        const minEfficiency = Math.min(...efficiencyValues);
+        const maxEfficiency = Math.max(...efficiencyValues);
+        const range = maxEfficiency - minEfficiency;
+
+        // Handle edge case where all values are the same
+        if (range === 0) {
+            return [{
+                position: 50, // Center position
+                count: efficiencyValues.length,
+                minValue: minEfficiency,
+                maxValue: maxEfficiency
+            }];
+        }
+
+        // Create bins
+        const binWidth = range / numBins;
+        const bins = Array(numBins).fill(0).map((_, i) => ({
+            minValue: minEfficiency + (i * binWidth),
+            maxValue: minEfficiency + ((i + 1) * binWidth),
+            count: 0,
+            index: i
+        }));
+
+        // Count vehicles in each bin
+        efficiencyValues.forEach(value => {
+            // Find which bin this value belongs to
+            let binIndex = Math.floor((value - minEfficiency) / binWidth);
+            // Handle edge case where value equals max (should go in last bin)
+            if (binIndex >= numBins) {
+                binIndex = numBins - 1;
+            }
+            bins[binIndex].count++;
+        });
+
+        // Calculate position for each bin (0-100%, reversed so most efficient is on right)
+        const binsWithPosition = bins.map(bin => {
+            // Calculate center value of bin
+            const centerValue = (bin.minValue + bin.maxValue) / 2;
+            // Calculate position (0 = least efficient, 100 = most efficient)
+            const rawPosition = ((centerValue - minEfficiency) / range) * 100;
+            // Reverse: most efficient on right
+            const position = 100 - rawPosition;
+            
+            return {
+                ...bin,
+                position: position
+            };
+        });
+
+        return {
+            bins: binsWithPosition,
+            minEfficiency: minEfficiency,
+            maxEfficiency: maxEfficiency,
+            range: range
+        };
+    }
+
+    async displayEfficiencyGraph(calculations) {
+        const graphContainer = document.getElementById('efficiency-graph-container');
+        const graphLine = document.getElementById('efficiency-graph-line');
+        const graphLineContainer = graphLine?.parentElement;
+
+        if (!graphContainer || !graphLine || !graphLineContainer) return;
+
+        // Clear previous graph
+        graphLine.innerHTML = '';
+        
+        // Remove any existing histogram bars
+        const existingHistogramBars = graphLineContainer.querySelectorAll('.efficiency-histogram-bar');
+        existingHistogramBars.forEach(bar => bar.remove());
+        
+        // Remove any existing tooltips
+        const existingTooltips = graphLineContainer.querySelectorAll('.efficiency-graph-tooltip');
+        existingTooltips.forEach(tooltip => tooltip.remove());
+
+        if (calculations.length === 0) {
+            graphContainer.style.display = 'none';
+            return;
+        }
+
+        // Load all vehicles efficiency data for histogram
+        const allVehiclesEfficiencyData = await this.getAllVehiclesEfficiencyData();
+        
+        // Create histogram bins using all vehicles data
+        const histogramData = this.createHistogramBins(allVehiclesEfficiencyData);
+        
+        // Use full range from all vehicles for scaling, with fallback to selected vehicles range
+        let globalMinEfficiency, globalMaxEfficiency, globalRange;
+        if (histogramData.bins && histogramData.bins.length > 0 && histogramData.range > 0) {
+            globalMinEfficiency = histogramData.minEfficiency;
+            globalMaxEfficiency = histogramData.maxEfficiency;
+            globalRange = histogramData.range;
+        } else {
+            // Fallback: use selected vehicles range if histogram data is not available
+            globalMinEfficiency = null;
+            globalMaxEfficiency = null;
+            globalRange = null;
+        }
+
+        // Calculate efficiency values
+        // For fuel: use L/100km (lower is better)
+        // For electric: use kWh/100km (lower is better)
+        // For hybrids: use fuel consumption as primary metric
+        // We'll normalize all values to a common scale for positioning
+        const efficiencyData = calculations.map((calc, index) => {
+            let efficiencyValue = null;
+            let efficiencyLabel = '';
+            let isHybrid = calc.isHybrid;
+            let displayValue = null;
+            
+            if (calc.fuelConsumptionRate !== null && calc.electricConsumptionRate !== null) {
+                // Hybrid: use fuel consumption as primary metric for positioning
+                efficiencyValue = calc.fuelConsumptionRate;
+                displayValue = calc.fuelConsumptionRate;
+                efficiencyLabel = `${calc.fuelConsumptionRate.toFixed(2)} L/100km + ${calc.electricConsumptionRate.toFixed(2)} kWh/100km`;
+            } else if (calc.fuelConsumptionRate !== null) {
+                efficiencyValue = calc.fuelConsumptionRate;
+                displayValue = calc.fuelConsumptionRate;
+                efficiencyLabel = `${calc.fuelConsumptionRate.toFixed(2)} L/100km`;
+            } else if (calc.electricConsumptionRate !== null) {
+                // For electric vehicles, convert kWh/100km to equivalent L/100km for positioning
+                // Rough energy equivalence: 1 kWh ≈ 0.1 L of petrol energy content
+                // But for efficiency comparison, we'll use a factor that makes sense visually
+                // Typical EV: 15-20 kWh/100km ≈ 1.5-2.0 L/100km equivalent
+                // So we'll use a factor of 0.1 to make them comparable on the same scale
+                efficiencyValue = calc.electricConsumptionRate * 0.1; // Scale for positioning
+                displayValue = calc.electricConsumptionRate;
+                efficiencyLabel = `${calc.electricConsumptionRate.toFixed(2)} kWh/100km`;
+            }
+
+            const variant = calc.variant;
+            const makeModel = `${variant.make || ''} ${variant.model || ''}`.trim() || calc.vehicleName;
+            const variantName = variant.trim || variant.versionName || 'Unknown Variant';
+
+            return {
+                index: index,
+                efficiencyValue: efficiencyValue,
+                efficiencyLabel: efficiencyLabel,
+                makeModel: makeModel,
+                variantName: variantName,
+                calc: calc,
+                isHybrid: isHybrid
+            };
+        }).filter(item => item.efficiencyValue !== null);
+
+        if (efficiencyData.length === 0) {
+            graphContainer.style.display = 'none';
+            return;
+        }
+
+        // Sort by efficiency (lowest to highest = most efficient to least efficient)
+        efficiencyData.sort((a, b) => a.efficiencyValue - b.efficiencyValue);
+
+        // Use global range for scaling (from all vehicles), with fallback to selected vehicles
+        const minEfficiency = globalMinEfficiency !== null ? globalMinEfficiency : (efficiencyData.length > 0 ? efficiencyData[0].efficiencyValue : 0);
+        const maxEfficiency = globalMaxEfficiency !== null ? globalMaxEfficiency : (efficiencyData.length > 0 ? efficiencyData[efficiencyData.length - 1].efficiencyValue : 0);
+        const range = globalRange !== null && globalRange > 0 ? globalRange : (efficiencyData.length > 0 ? efficiencyData[efficiencyData.length - 1].efficiencyValue - efficiencyData[0].efficiencyValue : 1);
+
+        // Color palette
+        const colors = [
+            '#3b82f6', // blue
+            '#10b981', // green
+            '#f59e0b', // amber
+            '#ef4444', // red
+            '#8b5cf6', // purple
+            '#ec4899', // pink
+            '#06b6d4', // cyan
+            '#84cc16', // lime
+            '#f97316', // orange
+            '#6366f1', // indigo
+            '#14b8a6', // teal
+            '#a855f7'  // violet
+        ];
+
+        // Group vehicles by position (handle overlapping)
+        const positionGroups = [];
+        const positionTolerance = 2; // percentage points
+
+        efficiencyData.forEach((item, idx) => {
+            // Calculate position (0 = least efficient, 100 = most efficient)
+            // Then reverse it so most efficient is on the right
+            const rawPosition = range > 0 
+                ? ((item.efficiencyValue - minEfficiency) / range) * 100 
+                : 50; // center if all same value
+            const position = 100 - rawPosition; // Reverse: most efficient on right
+
+            // Check if this position is close to an existing group
+            let addedToGroup = false;
+            for (let group of positionGroups) {
+                if (Math.abs(group.position - position) < positionTolerance) {
+                    group.items.push({...item, position: position, colorIndex: idx});
+                    addedToGroup = true;
+                    break;
+                }
+            }
+
+            if (!addedToGroup) {
+                positionGroups.push({
+                    position: position,
+                    items: [{...item, position: position, colorIndex: idx}]
+                });
+            }
+        });
+
+        // Create tooltip element
+        const tooltip = document.createElement('div');
+        tooltip.className = 'efficiency-graph-tooltip';
+        graphLineContainer.appendChild(tooltip);
+
+        let hideTooltipTimeout = null;
+
+        // Helper function to show tooltip
+        const showTooltip = (element, items) => {
+            // Clear any pending hide timeout
+            if (hideTooltipTimeout) {
+                clearTimeout(hideTooltipTimeout);
+                hideTooltipTimeout = null;
+            }
+            // All items at this position have the same efficiency (or very close)
+            const efficiencyLabel = items[0].efficiencyLabel;
+            
+            // Group items by make/model + trim combination
+            const vehicleGroups = {};
+            items.forEach(item => {
+                const key = `${item.makeModel} ${item.variantName}`;
+                if (!vehicleGroups[key]) {
+                    vehicleGroups[key] = 0;
+                }
+                vehicleGroups[key]++;
+            });
+            
+            // Build vehicle list - group identical trims with count, sorted alphabetically
+            const vehicleList = Object.entries(vehicleGroups)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([vehicleName, count]) => {
+                    if (count === 1) {
+                        return `<div class="efficiency-graph-tooltip-vehicle">${vehicleName}</div>`;
+                    } else {
+                        return `<div class="efficiency-graph-tooltip-vehicle">${vehicleName} (${count})</div>`;
+                    }
+                }).join('');
+            
+            tooltip.innerHTML = `
+                <div class="efficiency-graph-tooltip-value">${efficiencyLabel}</div>
+                ${vehicleList}
+            `;
+
+            // Position tooltip first (hidden) to measure it
+            tooltip.style.visibility = 'hidden';
+            tooltip.style.opacity = '0';
+            tooltip.classList.remove('visible');
+            
+            const tooltipRect = tooltip.getBoundingClientRect();
+            const elementRect = element.getBoundingClientRect();
+            const containerRect = graphLineContainer.getBoundingClientRect();
+            
+            // Calculate position relative to container
+            let left = elementRect.left - containerRect.left + (elementRect.width / 2) - (tooltipRect.width / 2);
+            let top = elementRect.top - containerRect.top - tooltipRect.height - 12;
+
+            // Adjust if tooltip goes off screen horizontally
+            if (left < 10) left = 10;
+            if (left + tooltipRect.width > containerRect.width - 10) {
+                left = containerRect.width - tooltipRect.width - 10;
+            }
+            
+            // Adjust if tooltip goes off screen vertically (show below instead)
+            if (top < 10) {
+                top = elementRect.bottom - containerRect.top + 12;
+            }
+
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
+            
+            // Now show it using CSS class - clear inline styles so CSS takes over
+            tooltip.style.opacity = '';
+            tooltip.style.visibility = '';
+            tooltip.classList.add('visible');
+        };
+
+        const hideTooltip = () => {
+            // Clear any pending timeout
+            if (hideTooltipTimeout) {
+                clearTimeout(hideTooltipTimeout);
+                hideTooltipTimeout = null;
+            }
+            // Immediately hide the tooltip
+            tooltip.classList.remove('visible');
+            // Reset inline styles that might interfere
+            tooltip.style.opacity = '';
+            tooltip.style.visibility = '';
+        };
+
+        // Hide tooltip when leaving the graph container
+        graphLineContainer.addEventListener('mouseleave', () => {
+            hideTooltip();
+        });
+
+        // Render histogram bars (ghost background)
+        if (histogramData.bins && histogramData.bins.length > 0) {
+            const maxCount = Math.max(...histogramData.bins.map(bin => bin.count));
+            const maxBarHeight = 25; // Maximum height in pixels (extending upward from line)
+            const barWidthPercent = Math.max(0.8, 100 / histogramData.bins.length * 0.8); // Bar width as percentage, slightly narrower than bin spacing
+            
+            histogramData.bins.forEach(bin => {
+                if (bin.count === 0) return; // Skip empty bins
+                
+                const normalizedHeight = maxCount > 0 ? (bin.count / maxCount) * maxBarHeight : 0;
+                
+                const bar = document.createElement('div');
+                bar.className = 'efficiency-histogram-bar';
+                bar.style.left = `${bin.position}%`;
+                bar.style.width = `${barWidthPercent}%`;
+                bar.style.height = `${normalizedHeight}px`;
+                bar.style.transform = 'translateX(-50%)'; // Center the bar on its position
+                
+                graphLineContainer.appendChild(bar);
+            });
+        }
+
+        // Create dots on the line
+        positionGroups.forEach((group, groupIdx) => {
+            if (group.items.length === 1) {
+                // Single dot
+                const item = group.items[0];
+                const color = colors[item.colorIndex % colors.length];
+                const dot = document.createElement('div');
+                dot.className = 'efficiency-graph-dot';
+                dot.style.left = `${group.position}%`;
+                dot.style.backgroundColor = color;
+                
+                dot.addEventListener('mouseenter', () => showTooltip(dot, group.items));
+                dot.addEventListener('mouseleave', hideTooltip);
+                
+                graphLine.appendChild(dot);
+            } else {
+                // Multiple dots at same position - create grouped dot
+                const groupDot = document.createElement('div');
+                groupDot.className = 'efficiency-graph-dot-group';
+                groupDot.style.left = `${group.position}%`;
+                
+                // Create segments for each item in the group
+                group.items.forEach((item, itemIdx) => {
+                    const color = colors[item.colorIndex % colors.length];
+                    const segment = document.createElement('div');
+                    segment.className = 'efficiency-graph-dot-segment';
+                    segment.style.backgroundColor = color;
+                    groupDot.appendChild(segment);
+                });
+
+                groupDot.addEventListener('mouseenter', () => showTooltip(groupDot, group.items));
+                groupDot.addEventListener('mouseleave', hideTooltip);
+                
+                graphLine.appendChild(groupDot);
+            }
+        });
+
+        // Show graph container
+        graphContainer.style.display = 'block';
     }
 
     showLoading(show) {
@@ -1060,8 +1521,12 @@ class FuelCostCalculator {
     hideResults() {
         const resultsPanel = document.getElementById('results-panel');
         const resultsTablePanel = document.getElementById('results-table-panel');
+        const graphContainer = document.getElementById('efficiency-graph-container');
         resultsPanel.classList.remove('active');
         resultsTablePanel.style.display = 'none';
+        if (graphContainer) {
+            graphContainer.style.display = 'none';
+        }
     }
 
     filterVariants(searchText) {
