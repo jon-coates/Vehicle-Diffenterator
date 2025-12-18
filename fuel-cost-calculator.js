@@ -1020,10 +1020,7 @@ class FuelCostCalculator {
 
             row.innerHTML = `
                 <td>
-                    <div class="table-value">${makeModel}</div>
-                </td>
-                <td>
-                    <div class="table-variant-name">${variantName}${badges}</div>
+                    <div class="table-variant-name">${makeModel} ${variantName}${badges}</div>
                     <div class="table-variant-details">${variantDetails}</div>
                 </td>
                 <td class="table-value">${consumptionDisplay}</td>

@@ -41,7 +41,7 @@
         .calculator-panel {
             background: var(--background-white);
             border-radius: var(--border-radius);
-            padding: 2rem;
+            padding: 1rem;
             margin-bottom: 2rem;
             box-shadow: var(--card-shadow);
         }
@@ -485,11 +485,58 @@
             border: 1px solid var(--border-color);
         }
 
+        @media (max-width: 768px) {
+            .results-table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .results-table th:first-child,
+            .results-table td:first-child {
+                position: sticky;
+                left: 0;
+                z-index: 10;
+                background: var(--background-white);
+                border-right: 2px solid var(--border-color);
+            }
+
+            .results-table thead th:first-child {
+                background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+                z-index: 11;
+            }
+
+            .results-table tbody tr:hover td:first-child {
+                background: #fafafa;
+            }
+
+            .results-table tbody tr.cheapest td:first-child {
+                background: linear-gradient(to right, #f0fdf4 0%, #ffffff 3%);
+            }
+
+            .results-table tbody tr.cheapest:hover td:first-child {
+                background: linear-gradient(to right, #dcfce7 0%, #f9fafb 3%);
+            }
+
+            .results-table tbody tr.most-expensive td:first-child {
+                background: linear-gradient(to right, #fef2f2 0%, #ffffff 3%);
+            }
+
+            .results-table tbody tr.most-expensive:hover td:first-child {
+                background: linear-gradient(to right, #fee2e2 0%, #f9fafb 3%);
+            }
+        }
+
         .results-table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
             font-size: 0.95rem;
+        }
+
+        @media (max-width: 768px) {
+            .results-table {
+                min-width: 600px;
+            }
         }
 
         .results-table thead {
@@ -559,6 +606,7 @@
             font-size: 1rem;
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: 0.5rem;
         }
 
@@ -603,17 +651,17 @@
             font-weight: 700;
         }
 
+        .results-table td:nth-child(2),
         .results-table td:nth-child(3),
         .results-table td:nth-child(4),
-        .results-table td:nth-child(5),
-        .results-table td:nth-child(6) {
+        .results-table td:nth-child(5) {
             text-align: right;
         }
 
+        .results-table th:nth-child(2),
         .results-table th:nth-child(3),
         .results-table th:nth-child(4),
-        .results-table th:nth-child(5),
-        .results-table th:nth-child(6) {
+        .results-table th:nth-child(5) {
             text-align: right;
         }
 
@@ -918,6 +966,13 @@
         }
 
         @media (max-width: 768px) {
+            .calculator-container {
+                padding: 1rem 0;
+            }
+            .main-content {
+                padding: 1rem 0;
+            }
+
             .driving-type-group {
                 flex-direction: column;
             }
@@ -1332,13 +1387,15 @@
                         
                         <div class="control-group">
                             <label class="control-label">Select Vehicles:</label>
-                            <div class="vehicle-select-wrapper" id="vehicle-select-wrapper">
-                                <input type="text" 
-                                       id="vehicle-search-input" 
-                                       class="vehicle-select-input" 
-                                       placeholder="Search and select vehicles..."
-                                       autocomplete="off">
-                                <span class="vehicle-select-arrow">▼</span>
+                            <div class="vehicle-select-wrapper" id="vehicle-select-wrapper" style="position: relative;">
+                                <div style="position: relative;">
+                                    <input type="text" 
+                                           id="vehicle-search-input" 
+                                           class="vehicle-select-input" 
+                                           placeholder="Search and select vehicles..."
+                                           autocomplete="off">
+                                    <span class="vehicle-select-arrow" style="position: absolute; top: 50%; right: 1rem; transform: translateY(-50%); pointer-events: none;">▼</span>
+                                </div>
                                 <div class="vehicle-dropdown" id="vehicle-dropdown">
                                     <!-- Dropdown items will be populated by JavaScript -->
                                 </div>
@@ -1416,15 +1473,15 @@
                             <label class="control-label">Fuel & Energy Costs:</label>
                             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem;">
                                 <div>
-                                    <label for="unleaded-cost-input" style="display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Unleaded (c/L):</label>
+                                    <label for="unleaded-cost-input" style="display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Unleaded (¢/L):</label>
                                     <input type="number" id="unleaded-cost-input" class="control-input" min="0" step="0.1" value="180" placeholder="Enter unleaded cost">
                                 </div>
                                 <div>
-                                    <label for="premium-unleaded-cost-input" style="display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Premium (c/L):</label>
+                                    <label for="premium-unleaded-cost-input" style="display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Premium (¢/L):</label>
                                     <input type="number" id="premium-unleaded-cost-input" class="control-input" min="0" step="0.1" value="200" placeholder="Enter premium unleaded cost">
                                 </div>
                                 <div>
-                                    <label for="diesel-cost-input" style="display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Diesel (c/L):</label>
+                                    <label for="diesel-cost-input" style="display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Diesel (¢/L):</label>
                                     <input type="number" id="diesel-cost-input" class="control-input" min="0" step="0.1" value="190" placeholder="Enter diesel cost">
                                 </div>
                                 <div>
@@ -1493,8 +1550,7 @@
                             <table class="results-table" id="results-table">
                                 <thead>
                                     <tr>
-                                        <th>Make/Model</th>
-                                        <th>Variant</th>
+                                        <th>Vehicle</th>
                                         <th>Consumption</th>
                                         <th>Energy Required</th>
                                         <th>Cost per Unit</th>
@@ -1531,6 +1587,20 @@
     </div>
 
     <script src="fuel-cost-calculator.js"></script>
+    <script>
+        // Hide header unless menu=true is in URL
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const showMenu = urlParams.get('menu') === 'true';
+            const header = document.querySelector('.app-header');
+            
+            if (header) {
+                if (!showMenu) {
+                    header.style.display = 'none';
+                }
+            }
+        })();
+    </script>
 </body>
 </html>
 
