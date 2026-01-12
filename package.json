@@ -1,0 +1,8 @@
+{
+  "name": "vehicle-diffenterator",
+  "version": "1.0.0",
+  "description": "Vehicle comparison and fuel calculator",
+  "dependencies": {
+    "@vercel/edge-config": "^1.0.0"
+  }
+}

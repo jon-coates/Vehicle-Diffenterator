@@ -100,25 +100,86 @@ class FuelCostCalculator {
         });
     }
 
-    loadDefaults() {
+    async loadDefaults() {
         // Initialize dropdown
         this.initVehicleDropdown();
-        
+
+        // Fetch real fuel prices from NSW API (cached)
+        await this.fetchRealFuelPrices();
+
         // Select default vehicle (Ford Ranger)
         this.selectVehicle('FDRA.json');
-        
+
         // Load the default vehicle data
         this.loadSelectedVehicles();
-        
+
         // Update distance displays
         this.updateDistanceDisplays();
-        
+
         // Auto-calculate with defaults
         setTimeout(() => {
             if (this.variants.length > 0) {
                 this.calculateFuelCosts();
             }
         }, 500);
+    }
+
+    async fetchRealFuelPrices() {
+        try {
+            console.log('🔍 Fetching real fuel prices...');
+
+            const response = await fetch('/api/fuel-prices');
+
+            if (!response.ok) {
+                throw new Error(`API responded with status: ${response.status}`);
+            }
+
+            const prices = await response.json();
+
+            console.log('✅ Received fuel prices:', prices);
+
+            // Update input fields with real prices (only if valid)
+            if (prices.unleaded && prices.unleaded > 0) {
+                const input = document.getElementById('unleaded-cost-input');
+                input.value = prices.unleaded.toFixed(1);
+                console.log(`   Unleaded: ${prices.unleaded.toFixed(1)}c/L`);
+            }
+
+            if (prices.premium && prices.premium > 0) {
+                const input = document.getElementById('premium-unleaded-cost-input');
+                input.value = prices.premium.toFixed(1);
+                console.log(`   Premium: ${prices.premium.toFixed(1)}c/L`);
+            }
+
+            if (prices.diesel && prices.diesel > 0) {
+                const input = document.getElementById('diesel-cost-input');
+                input.value = prices.diesel.toFixed(1);
+                console.log(`   Diesel: ${prices.diesel.toFixed(1)}c/L`);
+            }
+
+            // Show data source info
+            if (prices.fallback) {
+                console.log('⚠️ Using fallback prices');
+            } else if (prices.lastUpdated) {
+                const lastUpdated = new Date(prices.lastUpdated);
+                const timeString = lastUpdated.toLocaleString('en-AU', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                console.log(`   Last updated: ${timeString}`);
+
+                if (prices.dataPoints) {
+                    console.log(`   Data points: ${prices.dataPoints.unleaded} unleaded, ${prices.dataPoints.premium} premium, ${prices.dataPoints.diesel} diesel`);
+                }
+            }
+
+        } catch (error) {
+            console.warn('⚠️ Failed to fetch real fuel prices, using defaults:', error.message);
+            // Fallback to hardcoded defaults (current values in HTML)
+        }
     }
 
     initVehicleDropdown() {
