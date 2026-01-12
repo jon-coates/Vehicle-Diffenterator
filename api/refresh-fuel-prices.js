@@ -33,13 +33,23 @@ export default async function handler(req, res) {
       body: `client_id=${encodeURIComponent(apiKey)}&client_secret=${encodeURIComponent(apiSecret)}`
     });
 
+    const tokenText = await tokenResponse.text();
+    console.log('🔍 OAuth response status:', tokenResponse.status);
+    console.log('🔍 OAuth response (first 200 chars):', tokenText.substring(0, 200));
+
     if (!tokenResponse.ok) {
-      const tokenError = await tokenResponse.text();
-      console.error('❌ OAuth token error:', tokenError);
-      throw new Error(`Failed to get OAuth token: ${tokenResponse.status} - ${tokenError}`);
+      console.error('❌ OAuth token error:', tokenText);
+      throw new Error(`Failed to get OAuth token: ${tokenResponse.status} - ${tokenText}`);
     }
 
-    const tokenData = await tokenResponse.json();
+    let tokenData;
+    try {
+      tokenData = JSON.parse(tokenText);
+    } catch (parseError) {
+      console.error('❌ Failed to parse OAuth response as JSON:', tokenText);
+      throw new Error(`OAuth response is not valid JSON: ${tokenText.substring(0, 100)}`);
+    }
+
     const accessToken = tokenData.access_token;
 
     if (!accessToken) {
