@@ -23,14 +23,14 @@ export default async function handler(req, res) {
       throw new Error('NSW API credentials not configured');
     }
 
-    // Step 1: Get OAuth access token
+    // Step 1: Get OAuth access token using Authorization header
     console.log('🔐 Getting OAuth access token...');
+    const authHeader = process.env.NSW_AUTH_HEADER;
     const tokenResponse = await fetch('https://api.onegov.nsw.gov.au/oauth/client_credential/accesstoken?grant_type=client_credentials', {
-      method: 'POST',
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: `client_id=${encodeURIComponent(apiKey)}&client_secret=${encodeURIComponent(apiSecret)}`
+        'Authorization': authHeader
+      }
     });
 
     const tokenText = await tokenResponse.text();
