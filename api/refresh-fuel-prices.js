@@ -23,16 +23,33 @@ export default async function handler(req, res) {
       throw new Error('NSW API credentials not configured');
     }
 
+    // Generate current timestamp in required format: dd/MM/yyyy hh:mm:ss AM/PM
+    const now = new Date();
+    const day = String(now.getUTCDate()).padStart(2, '0');
+    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const year = now.getUTCFullYear();
+    const hours = now.getUTCHours();
+    const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours % 12 || 12;
+    const timestamp = `${day}/${month}/${year} ${String(hours12).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+
+    // Generate unique transaction ID
+    const transactionId = `cron-${Date.now()}`;
+
     // Encode API credentials for Basic auth
     const credentials = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
 
-    // Try calling NSW FuelCheck API directly with Basic auth
+    // Call NSW FuelCheck API with Basic auth
     console.log('📡 Fetching data from NSW FuelCheck API...');
     const response = await fetch('https://api.onegov.nsw.gov.au/FuelPriceCheck/v1/fuel/prices', {
       headers: {
         'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/json',
-        'apikey': apiKey
+        'Content-Type': 'application/json; charset=utf-8',
+        'apikey': apiKey,
+        'transactionid': transactionId,
+        'requesttimestamp': timestamp
       }
     });
 
@@ -41,7 +58,7 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    console.log(`📊 Received data from ${data.stations?.length || 0} stations`);
+    console.log(`📊 Received ${data.prices?.length || 0} prices from ${data.stations?.length || 0} stations`);
 
     // Calculate average prices
     const prices = calculateAveragePrices(data);
@@ -80,20 +97,17 @@ function calculateAveragePrices(data) {
     'E10': []   // E10 Ethanol
   };
 
-  // Parse NSW API response structure
-  // Adjust this based on actual API response format
-  const stations = data.stations || data.prices || [];
+  // NSW API returns prices in a separate array at top level
+  // Structure: { stations: [...], prices: [{stationcode, fueltype, price, lastupdated}, ...] }
+  const prices = data.prices || [];
 
-  stations.forEach(station => {
-    const prices = station.prices || [];
-    prices.forEach(priceItem => {
-      const fuelType = priceItem.fueltype || priceItem.fuel_type;
-      const price = parseFloat(priceItem.price);
+  prices.forEach(priceItem => {
+    const fuelType = priceItem.fueltype;
+    const price = parseFloat(priceItem.price);
 
-      if (fuelTypes.hasOwnProperty(fuelType) && !isNaN(price) && price > 0) {
-        fuelTypes[fuelType].push(price);
-      }
-    });
+    if (fuelTypes.hasOwnProperty(fuelType) && !isNaN(price) && price > 0) {
+      fuelTypes[fuelType].push(price);
+    }
   });
 
   // Calculate median (better than average to avoid outliers)
