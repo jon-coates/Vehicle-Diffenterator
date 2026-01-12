@@ -17,13 +17,38 @@ export default async function handler(req, res) {
 
   try {
     const apiKey = process.env.NSW_API_KEY;
-    const authHeader = process.env.NSW_AUTH_HEADER;
+    const apiSecret = process.env.NSW_API_SECRET;
 
-    if (!apiKey || !authHeader) {
+    if (!apiKey || !apiSecret) {
       throw new Error('NSW API credentials not configured');
     }
 
-    // Generate current timestamp in required format: dd/MM/yyyy hh:mm:ss AM/PM
+    // Step 1: Get OAuth access token
+    console.log('🔐 Getting OAuth access token...');
+    const tokenResponse = await fetch('https://api.onegov.nsw.gov.au/oauth/client_credential/accesstoken?grant_type=client_credentials', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: `client_id=${encodeURIComponent(apiKey)}&client_secret=${encodeURIComponent(apiSecret)}`
+    });
+
+    if (!tokenResponse.ok) {
+      const tokenError = await tokenResponse.text();
+      console.error('❌ OAuth token error:', tokenError);
+      throw new Error(`Failed to get OAuth token: ${tokenResponse.status} - ${tokenError}`);
+    }
+
+    const tokenData = await tokenResponse.json();
+    const accessToken = tokenData.access_token;
+
+    if (!accessToken) {
+      throw new Error('No access token in OAuth response');
+    }
+
+    console.log('✅ Access token obtained');
+
+    // Step 2: Generate current timestamp in required format: dd/MM/yyyy hh:mm:ss AM/PM
     const now = new Date();
     const day = String(now.getUTCDate()).padStart(2, '0');
     const month = String(now.getUTCMonth() + 1).padStart(2, '0');
@@ -38,18 +63,15 @@ export default async function handler(req, res) {
     // Generate unique transaction ID
     const transactionId = `cron-${Date.now()}`;
 
-    // Debug logging
-    console.log('🔍 Debug info:');
-    console.log('  - API Key:', apiKey?.substring(0, 10) + '...');
-    console.log('  - Auth Header:', authHeader?.substring(0, 20) + '...');
+    console.log('🔍 Request info:');
     console.log('  - Transaction ID:', transactionId);
     console.log('  - Timestamp:', timestamp);
 
-    // Call NSW FuelCheck API using pre-generated auth header
+    // Step 3: Call NSW FuelCheck API with Bearer token
     console.log('📡 Fetching data from NSW FuelCheck API...');
     const response = await fetch('https://api.onegov.nsw.gov.au/FuelPriceCheck/v1/fuel/prices', {
       headers: {
-        'Authorization': authHeader,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json; charset=utf-8',
         'apikey': apiKey,
         'transactionid': transactionId,
