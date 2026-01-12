@@ -174,12 +174,44 @@ class FuelCostCalculator {
                 if (prices.dataPoints) {
                     console.log(`   Data points: ${prices.dataPoints.unleaded} unleaded, ${prices.dataPoints.premium} premium, ${prices.dataPoints.diesel} diesel`);
                 }
+
+                // Show info message below fuel cost inputs
+                this.showFuelPriceInfo(lastUpdated, prices.dataPoints);
             }
 
         } catch (error) {
             console.warn('⚠️ Failed to fetch real fuel prices, using defaults:', error.message);
             // Fallback to hardcoded defaults (current values in HTML)
         }
+    }
+
+    showFuelPriceInfo(lastUpdated, dataPoints) {
+        const infoDiv = document.getElementById('fuel-price-info');
+        const infoText = document.getElementById('fuel-price-info-text');
+
+        if (!infoDiv || !infoText) return;
+
+        // Format the timestamp
+        const timeString = lastUpdated.toLocaleString('en-AU', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        // Calculate total data points
+        const totalStations = dataPoints ?
+            (dataPoints.unleaded || 0) + (dataPoints.premium || 0) + (dataPoints.diesel || 0) : 0;
+
+        // Build the message
+        let message = '⛽ Fuel prices based on real NSW FuelCheck data';
+        if (totalStations > 0) {
+            message += ` (${totalStations.toLocaleString()} prices)`;
+        }
+        message += ` • Last updated: ${timeString}`;
+
+        infoText.textContent = message;
+        infoDiv.style.display = 'block';
     }
 
     initVehicleDropdown() {
