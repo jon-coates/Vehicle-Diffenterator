@@ -23,36 +23,16 @@ export default async function handler(req, res) {
       throw new Error('NSW API credentials not configured');
     }
 
-    // First, get OAuth access token
-    console.log('🔐 Getting OAuth access token...');
+    // Encode API credentials for Basic auth
     const credentials = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
 
-    const tokenResponse = await fetch('https://api.onegov.nsw.gov.au/oauth/client_credential/accesstoken?grant_type=client_credentials', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Basic ${credentials}`
-      }
-    });
-
-    if (!tokenResponse.ok) {
-      throw new Error(`OAuth token request failed: ${tokenResponse.status}`);
-    }
-
-    const tokenData = await tokenResponse.json();
-    const accessToken = tokenData.access_token;
-
-    if (!accessToken) {
-      throw new Error('No access token received from OAuth');
-    }
-
-    console.log('✅ Access token received');
-
-    // Call NSW FuelCheck API with access token
+    // Try calling NSW FuelCheck API directly with Basic auth
     console.log('📡 Fetching data from NSW FuelCheck API...');
     const response = await fetch('https://api.onegov.nsw.gov.au/FuelPriceCheck/v1/fuel/prices', {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+        'Authorization': `Basic ${credentials}`,
+        'Content-Type': 'application/json',
+        'apikey': apiKey
       }
     });
 
