@@ -38,6 +38,13 @@ export default async function handler(req, res) {
     // Generate unique transaction ID
     const transactionId = `cron-${Date.now()}`;
 
+    // Debug logging
+    console.log('🔍 Debug info:');
+    console.log('  - API Key:', apiKey?.substring(0, 10) + '...');
+    console.log('  - Auth Header:', authHeader?.substring(0, 20) + '...');
+    console.log('  - Transaction ID:', transactionId);
+    console.log('  - Timestamp:', timestamp);
+
     // Call NSW FuelCheck API using pre-generated auth header
     console.log('📡 Fetching data from NSW FuelCheck API...');
     const response = await fetch('https://api.onegov.nsw.gov.au/FuelPriceCheck/v1/fuel/prices', {
@@ -49,6 +56,8 @@ export default async function handler(req, res) {
         'requesttimestamp': timestamp
       }
     });
+
+    console.log('📥 Response status:', response.status);
 
     if (!response.ok) {
       throw new Error(`NSW API returned status: ${response.status}`);
