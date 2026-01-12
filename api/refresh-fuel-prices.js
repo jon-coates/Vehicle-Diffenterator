@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     const credentials = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
 
     console.log('📡 Fetching data from NSW FuelCheck API...');
-    const response = await fetch('https://api.nsw.gov.au/v1/fuel-prices/prices/all', {
+    const response = await fetch('https://api.nsw.gov.au/fuelpricecheck/v1/fuel/prices', {
       headers: {
         'Authorization': `Basic ${credentials}`,
         'Content-Type': 'application/json'
