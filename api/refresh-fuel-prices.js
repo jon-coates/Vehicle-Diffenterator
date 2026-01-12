@@ -17,9 +17,9 @@ export default async function handler(req, res) {
 
   try {
     const apiKey = process.env.NSW_API_KEY;
-    const apiSecret = process.env.NSW_API_SECRET;
+    const authHeader = process.env.NSW_AUTH_HEADER;
 
-    if (!apiKey || !apiSecret) {
+    if (!apiKey || !authHeader) {
       throw new Error('NSW API credentials not configured');
     }
 
@@ -38,14 +38,11 @@ export default async function handler(req, res) {
     // Generate unique transaction ID
     const transactionId = `cron-${Date.now()}`;
 
-    // Encode API credentials for Basic auth
-    const credentials = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
-
-    // Call NSW FuelCheck API with Basic auth
+    // Call NSW FuelCheck API using pre-generated auth header
     console.log('📡 Fetching data from NSW FuelCheck API...');
     const response = await fetch('https://api.onegov.nsw.gov.au/FuelPriceCheck/v1/fuel/prices', {
       headers: {
-        'Authorization': `Basic ${credentials}`,
+        'Authorization': authHeader,
         'Content-Type': 'application/json; charset=utf-8',
         'apikey': apiKey,
         'transactionid': transactionId,
