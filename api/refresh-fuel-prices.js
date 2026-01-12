@@ -60,7 +60,10 @@ export default async function handler(req, res) {
     console.log('📥 Response status:', response.status);
 
     if (!response.ok) {
-      throw new Error(`NSW API returned status: ${response.status}`);
+      // Get the error response body for debugging
+      const errorText = await response.text();
+      console.error('❌ NSW API error response:', errorText);
+      throw new Error(`NSW API returned status: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
