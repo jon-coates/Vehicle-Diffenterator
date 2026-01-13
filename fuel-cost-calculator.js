@@ -135,9 +135,36 @@ class FuelCostCalculator {
                 throw new Error(`API responded with status: ${response.status}`);
             }
 
-            const priceData = await response.json();
+            let priceData = await response.json();
 
             console.log('✅ Received fuel price data:', priceData);
+
+            // Handle backwards compatibility: convert old format to new format
+            if (priceData.unleaded && !priceData.latest) {
+                console.log('⚠️ Converting old data format to new format');
+                priceData = {
+                    latest: {
+                        unleaded: priceData.unleaded,
+                        premium: priceData.premium,
+                        diesel: priceData.diesel,
+                        dataPoints: priceData.dataPoints
+                    },
+                    averages: {
+                        last7Days: {
+                            unleaded: priceData.unleaded,
+                            premium: priceData.premium,
+                            diesel: priceData.diesel
+                        },
+                        last30Days: {
+                            unleaded: priceData.unleaded,
+                            premium: priceData.premium,
+                            diesel: priceData.diesel
+                        }
+                    },
+                    history: [],
+                    lastUpdated: priceData.lastUpdated
+                };
+            }
 
             // Store the full price data
             this.fuelPriceData = priceData;
