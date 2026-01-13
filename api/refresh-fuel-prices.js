@@ -178,7 +178,7 @@ function calculateAveragePrices(data) {
 
 /**
  * Update Edge Config with historical prices and calculate averages
- * Maintains up to 90 days of history
+ * Maintains up to 30 days of history (reduced to stay within size limits)
  * Uses Vercel's Management API since Edge Config doesn't have a write SDK
  */
 async function updateEdgeConfigWithHistory(todaysPrices) {
@@ -223,14 +223,14 @@ async function updateEdgeConfigWithHistory(todaysPrices) {
   // Step 2: Build history array
   let history = existingData?.history || [];
 
-  // Add today's prices to history
+  // Add today's prices to history (without dataPoints to save space)
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
   const todayEntry = {
     date: today,
     unleaded: todaysPrices.unleaded,
     premium: todaysPrices.premium,
-    diesel: todaysPrices.diesel,
-    dataPoints: todaysPrices.dataPoints
+    diesel: todaysPrices.diesel
+    // Note: dataPoints excluded from history to reduce size
   };
 
   // Check if today's entry already exists (in case cron runs multiple times)
@@ -245,9 +245,9 @@ async function updateEdgeConfigWithHistory(todaysPrices) {
     console.log('➕ Added new price entry for today');
   }
 
-  // Sort by date (newest first) and keep only last 90 days
+  // Sort by date (newest first) and keep only last 30 days
   history.sort((a, b) => new Date(b.date) - new Date(a.date));
-  history = history.slice(0, 90);
+  history = history.slice(0, 30);
 
   // Step 3: Calculate averages
   const averages = calculateAverages(history);

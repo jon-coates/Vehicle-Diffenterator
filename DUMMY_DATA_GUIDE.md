@@ -1,16 +1,18 @@
 # Quick Start: Populating Dummy Fuel Price Data
 
-This guide helps you quickly populate 90 days of realistic fuel price data to test all the new historical features.
+This guide helps you quickly populate 30 days of realistic fuel price data to test all the new historical features.
 
 ## Why Use Dummy Data?
 
 The new fuel price features include:
-- 📊 **90-day price history**
+- 📊 **30-day price history**
 - 📈 **7-day and 30-day averages**
 - 📉 **Price trend indicators**
 - 📊 **Visual trend charts**
 
 Without dummy data, these features would take 7-30 days to become useful as the cron job builds up history. With dummy data, you can see everything working immediately!
+
+**Note:** Reduced to 30 days to stay within Edge Config size limits (512KB per item).
 
 ## How to Populate Dummy Data
 
@@ -45,7 +47,7 @@ You should see a response like:
   "success": true,
   "message": "Dummy data populated successfully",
   "data": {
-    "daysGenerated": 90,
+    "daysGenerated": 30,
     "latest": {
       "unleaded": 182.5,
       "premium": 205.3,
@@ -87,7 +89,7 @@ The generated data mimics real Australian fuel price behavior:
 
 2. **Daily Variations** - Random ±3¢ changes day-to-day
 
-3. **Long-term Trends** - Gradual price changes over the 90-day period
+3. **Long-term Trends** - Gradual price changes over the 30-day period
 
 4. **Realistic Prices** - Based on typical NSW fuel prices:
    - Unleaded: ~182¢/L

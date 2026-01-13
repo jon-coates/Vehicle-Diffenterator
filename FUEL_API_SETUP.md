@@ -126,7 +126,7 @@ You have two options to get started with fuel price data:
 
 #### Option A: Use Dummy Data (Recommended for Testing)
 
-This populates 90 days of realistic dummy data so you can immediately see all features (trends, charts, averages):
+This populates 30 days of realistic dummy data so you can immediately see all features (trends, charts, averages):
 
 **Via Browser:**
 ```
@@ -139,10 +139,11 @@ curl "https://your-app.vercel.app/api/populate-dummy-data?secret=your_cron_secre
 ```
 
 This generates:
-- 90 days of historical price data
+- 30 days of historical price data
 - Realistic weekly price cycles (mimicking Australian fuel markets)
 - Random daily variations
 - Calculated 7-day and 30-day averages
+- Optimized to stay within Edge Config size limits
 
 You can replace this with real data anytime by running the actual refresh (Option B).
 
@@ -330,10 +331,11 @@ The system now includes advanced price tracking features:
 
 ### Features
 
-**1. 90-Day Price History**
-- Automatically stores last 90 days of fuel prices
+**1. 30-Day Price History**
+- Automatically stores last 30 days of fuel prices
 - One daily snapshot at 6 AM
 - Survives across deployments (stored in Edge Config)
+- Optimized to stay within Edge Config size limits
 
 **2. Price Averaging**
 Users can choose between:
@@ -357,8 +359,8 @@ Users can choose between:
 Day 1: Cron runs → Stores today's prices
 Day 2: Cron runs → Stores today's prices, calculates 2-day average
 Day 7: Full 7-day averaging available
-Day 30: Full 30-day averaging available
-Day 90: Maximum history reached, oldest day dropped
+Day 30: Full 30-day averaging available, maximum history reached
+Day 31+: Oldest day dropped as new data is added (rolling 30-day window)
 ```
 
 ### Data Structure
@@ -378,7 +380,7 @@ Day 90: Maximum history reached, oldest day dropped
   "history": [
     { "date": "2026-01-13", "unleaded": 182.5, "premium": 205.3, "diesel": 195.7 },
     { "date": "2026-01-12", "unleaded": 183.1, "premium": 206.0, "diesel": 196.2 },
-    // ... up to 90 days
+    // ... up to 30 days (dataPoints excluded from history to save space)
   ],
   "lastUpdated": "2026-01-13T06:00:00.000Z"
 }
@@ -386,11 +388,12 @@ Day 90: Maximum history reached, oldest day dropped
 
 ### Testing with Dummy Data
 
-Use `/api/populate-dummy-data?secret=YOUR_SECRET` to generate 90 days of realistic data:
+Use `/api/populate-dummy-data?secret=YOUR_SECRET` to generate 30 days of realistic data:
 - Mimics Australian weekly price cycles (7-day peaks and troughs)
 - Includes random daily variations (±3¢)
 - Gradual long-term trends
 - Instant access to all features without waiting
+- Optimized to stay within Edge Config size limits
 
 ## 💡 Future Enhancements
 

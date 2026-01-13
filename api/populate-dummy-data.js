@@ -1,11 +1,13 @@
 /**
- * One-time script to populate Edge Config with 90 days of dummy fuel price data
+ * One-time script to populate Edge Config with 30 days of dummy fuel price data
  * Run this manually via: https://your-app.vercel.app/api/populate-dummy-data?secret=YOUR_CRON_SECRET
  *
  * This creates realistic price data with:
  * - Weekly price cycles (mimicking Australian fuel price cycles)
  * - Gradual trends over time
  * - Random daily variations
+ *
+ * Note: Reduced to 30 days to stay within Edge Config size limits
  */
 
 export default async function handler(req, res) {
@@ -18,18 +20,28 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized - include ?secret=YOUR_CRON_SECRET' });
   }
 
-  console.log('🎲 Generating 90 days of dummy fuel price data...');
+  console.log('🎲 Generating 30 days of dummy fuel price data...');
 
   try {
-    // Generate 90 days of historical data
-    const history = generateDummyHistory(90);
+    // Generate 30 days of historical data (reduced for size limits)
+    const history = generateDummyHistory(30);
 
     // Calculate averages
     const averages = calculateAverages(history);
 
+    // Add dataPoints to latest entry only (to reduce overall size)
+    const latest = {
+      ...history[0],
+      dataPoints: {
+        unleaded: Math.floor(1200 + Math.random() * 300),
+        premium: Math.floor(800 + Math.random() * 200),
+        diesel: Math.floor(1000 + Math.random() * 250)
+      }
+    };
+
     // Structure matches real data
     const priceData = {
-      latest: history[0], // Most recent entry
+      latest: latest,
       averages: averages,
       history: history,
       lastUpdated: new Date().toISOString()
@@ -101,12 +113,8 @@ function generateDummyHistory(days) {
       date: dateString,
       unleaded: unleaded,
       premium: premium,
-      diesel: diesel,
-      dataPoints: {
-        unleaded: Math.floor(1200 + Math.random() * 300), // Random number of stations
-        premium: Math.floor(800 + Math.random() * 200),
-        diesel: Math.floor(1000 + Math.random() * 250)
-      }
+      diesel: diesel
+      // Note: dataPoints removed from history to reduce size, only kept in latest
     });
   }
 
