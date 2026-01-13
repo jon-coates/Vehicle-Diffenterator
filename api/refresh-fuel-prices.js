@@ -109,7 +109,6 @@ export default async function handler(req, res) {
     const priceData = await updateEdgeConfigWithHistory(todaysPrices);
 
     console.log('✅ Fuel prices refreshed successfully!');
-    console.log(`📈 7-day avg: Unleaded ${priceData.averages.last7Days.unleaded?.toFixed(1)}c, Premium ${priceData.averages.last7Days.premium?.toFixed(1)}c, Diesel ${priceData.averages.last7Days.diesel?.toFixed(1)}c`);
     console.log(`📈 30-day avg: Unleaded ${priceData.averages.last30Days.unleaded?.toFixed(1)}c, Premium ${priceData.averages.last30Days.premium?.toFixed(1)}c, Diesel ${priceData.averages.last30Days.diesel?.toFixed(1)}c`);
 
     return res.status(200).json({

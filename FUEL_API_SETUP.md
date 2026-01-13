@@ -339,8 +339,7 @@ The system now includes advanced price tracking features:
 
 **2. Price Averaging**
 Users can choose between:
-- **Latest** - Today's median prices
-- **7-Day Average** - Smooths out daily volatility (default)
+- **Latest** - Today's median prices (default)
 - **30-Day Average** - Long-term baseline pricing
 
 **3. Trend Indicators**
@@ -357,8 +356,7 @@ Users can choose between:
 
 ```
 Day 1: Cron runs → Stores today's prices
-Day 2: Cron runs → Stores today's prices, calculates 2-day average
-Day 7: Full 7-day averaging available
+Day 2-29: Cron runs → Stores each day's prices, builds history
 Day 30: Full 30-day averaging available, maximum history reached
 Day 31+: Oldest day dropped as new data is added (rolling 30-day window)
 ```
@@ -374,7 +372,6 @@ Day 31+: Oldest day dropped as new data is added (rolling 30-day window)
     "dataPoints": { "unleaded": 1250, "premium": 890, "diesel": 1100 }
   },
   "averages": {
-    "last7Days": { "unleaded": 183.2, "premium": 206.1, "diesel": 196.3 },
     "last30Days": { "unleaded": 185.4, "premium": 207.8, "diesel": 197.2 }
   },
   "history": [

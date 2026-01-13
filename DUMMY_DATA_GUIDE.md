@@ -6,7 +6,7 @@ This guide helps you quickly populate 30 days of realistic fuel price data to te
 
 The new fuel price features include:
 - 📊 **30-day price history**
-- 📈 **7-day and 30-day averages**
+- 📈 **30-day price averaging**
 - 📉 **Price trend indicators**
 - 📊 **Visual trend charts**
 
@@ -54,11 +54,6 @@ You should see a response like:
       "diesel": 195.7
     },
     "averages": {
-      "last7Days": {
-        "unleaded": 183.2,
-        "premium": 206.1,
-        "diesel": 196.3
-      },
       "last30Days": {
         "unleaded": 185.4,
         "premium": 207.8,
@@ -72,7 +67,7 @@ You should see a response like:
 ### Step 4: Check the Fuel Calculator
 
 Visit your fuel calculator page and you should now see:
-- ✅ Price period selector (Latest / 7-Day / 30-Day)
+- ✅ Price period selector (Latest / 30-Day Average)
 - ✅ Trend indicators showing price changes with arrows and percentages
 - ✅ 30-day price trend chart
 - ✅ Updated fuel prices based on selected period
@@ -125,7 +120,7 @@ This will replace the dummy data with real current prices. The cron job will the
 
 ## Next Steps
 
-- Experiment with different price periods (Latest / 7-Day / 30-Day)
+- Experiment with different price periods (Latest / 30-Day Average)
 - Watch how the trend indicators show price movements
 - Check the trend chart to see price cycles
 - Let the daily cron job run to see how it maintains the history

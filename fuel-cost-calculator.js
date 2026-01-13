@@ -151,11 +151,6 @@ class FuelCostCalculator {
                         dataPoints: priceData.dataPoints
                     },
                     averages: {
-                        last7Days: {
-                            unleaded: priceData.unleaded,
-                            premium: priceData.premium,
-                            diesel: priceData.diesel
-                        },
                         last30Days: {
                             unleaded: priceData.unleaded,
                             premium: priceData.premium,
@@ -170,8 +165,8 @@ class FuelCostCalculator {
             // Store the full price data
             this.fuelPriceData = priceData;
 
-            // Get the selected price period (default to 7-day)
-            const selectedPeriod = document.querySelector('input[name="price-period"]:checked')?.value || '7day';
+            // Get the selected price period (default to latest)
+            const selectedPeriod = document.querySelector('input[name="price-period"]:checked')?.value || 'latest';
 
             // Update input fields based on selected period
             this.updateFuelPricesFromPeriod(selectedPeriod);
@@ -213,18 +208,14 @@ class FuelCostCalculator {
         let periodLabel;
 
         switch (period) {
-            case 'latest':
-                prices = this.fuelPriceData.latest;
-                periodLabel = 'Latest';
-                break;
             case '30day':
                 prices = this.fuelPriceData.averages?.last30Days || this.fuelPriceData.latest;
                 periodLabel = '30-Day Average';
                 break;
-            case '7day':
+            case 'latest':
             default:
-                prices = this.fuelPriceData.averages?.last7Days || this.fuelPriceData.latest;
-                periodLabel = '7-Day Average';
+                prices = this.fuelPriceData.latest;
+                periodLabel = 'Latest';
                 break;
         }
 
