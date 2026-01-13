@@ -9,6 +9,7 @@ class FuelCostCalculator {
         this.allVehiclesEfficiencyCache = null; // Cache for all vehicles' efficiency data
         this.currentView = 'table'; // Current view: 'table' or 'columns'
         this.fuelPriceData = null; // Store full fuel price data (latest, averages, history)
+        this.priceChart = null; // Chart.js instance for price trend chart
         this.vehicleList = [
             { filename: 'bydSealion6.json', name: 'BYD Sealion 6' },
             { filename: 'bydSealion7.json', name: 'BYD Sealion 7' },
@@ -2012,107 +2013,160 @@ class FuelCostCalculator {
 
     displayPriceTrendChart(history) {
         const container = document.getElementById('price-trend-chart-container');
-        const chartDiv = document.getElementById('price-trend-chart');
+        const canvas = document.getElementById('price-trend-chart');
 
-        if (!container || !chartDiv || !history || history.length < 2) {
+        if (!container || !canvas || !history || history.length < 2) {
             if (container) container.style.display = 'none';
             return;
         }
 
-        // Show last 30 days
-        const chartData = history.slice(0, 30).reverse();
+        // Show last 30 days (already in chronological order)
+        const chartData = history.slice(0, 30);
 
-        // Extract data for each fuel type
-        const unleadedData = chartData.map(d => d.unleaded).filter(v => v != null);
-        const premiumData = chartData.map(d => d.premium).filter(v => v != null);
-        const dieselData = chartData.map(d => d.diesel).filter(v => v != null);
+        // Extract dates and data for each fuel type
+        const labels = chartData.map(d => {
+            const date = new Date(d.date);
+            return date.toLocaleDateString('en-AU', { month: 'short', day: 'numeric' });
+        });
 
-        if (unleadedData.length === 0 && premiumData.length === 0 && dieselData.length === 0) {
+        const datasets = [];
+
+        // Add Unleaded dataset if available
+        const unleadedData = chartData.map(d => d.unleaded);
+        if (unleadedData.some(v => v != null)) {
+            datasets.push({
+                label: 'Unleaded',
+                data: unleadedData,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 2,
+                pointHoverRadius: 5
+            });
+        }
+
+        // Add Premium dataset if available
+        const premiumData = chartData.map(d => d.premium);
+        if (premiumData.some(v => v != null)) {
+            datasets.push({
+                label: 'Premium',
+                data: premiumData,
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 2,
+                pointHoverRadius: 5
+            });
+        }
+
+        // Add Diesel dataset if available
+        const dieselData = chartData.map(d => d.diesel);
+        if (dieselData.some(v => v != null)) {
+            datasets.push({
+                label: 'Diesel',
+                data: dieselData,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 2,
+                pointHoverRadius: 5
+            });
+        }
+
+        if (datasets.length === 0) {
             container.style.display = 'none';
             return;
         }
 
-        // Find min and max across all fuel types for scaling
-        const allPrices = [...unleadedData, ...premiumData, ...dieselData];
-        const minPrice = Math.min(...allPrices);
-        const maxPrice = Math.max(...allPrices);
-        const priceRange = maxPrice - minPrice;
-        const padding = priceRange * 0.1; // 10% padding
-
-        // Chart dimensions
-        const width = chartDiv.clientWidth - 32; // Account for padding
-        const height = 88; // Fixed height for the chart area
-
-        // Create SVG
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', width);
-        svg.setAttribute('height', height);
-        svg.style.display = 'block';
-
-        // Helper to create a line path
-        const createLine = (data, color) => {
-            if (data.length < 2) return null;
-
-            const points = data.map((price, index) => {
-                const x = (index / (data.length - 1)) * width;
-                const y = height - ((price - (minPrice - padding)) / (priceRange + 2 * padding)) * height;
-                return `${x},${y}`;
-            }).join(' ');
-
-            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-            polyline.setAttribute('points', points);
-            polyline.setAttribute('fill', 'none');
-            polyline.setAttribute('stroke', color);
-            polyline.setAttribute('stroke-width', '2');
-            polyline.setAttribute('stroke-linecap', 'round');
-            polyline.setAttribute('stroke-linejoin', 'round');
-
-            return polyline;
-        };
-
-        // Add lines for each fuel type
-        if (unleadedData.length >= 2) {
-            const line = createLine(unleadedData, '#3b82f6'); // Blue
-            if (line) svg.appendChild(line);
+        // Destroy existing chart if it exists
+        if (this.priceChart) {
+            this.priceChart.destroy();
         }
 
-        if (premiumData.length >= 2) {
-            const line = createLine(premiumData, '#8b5cf6'); // Purple
-            if (line) svg.appendChild(line);
-        }
-
-        if (dieselData.length >= 2) {
-            const line = createLine(dieselData, '#10b981'); // Green
-            if (line) svg.appendChild(line);
-        }
-
-        // Clear previous chart and add new one
-        chartDiv.innerHTML = '';
-        chartDiv.appendChild(svg);
-
-        // Add legend
-        const legend = document.createElement('div');
-        legend.style.cssText = 'display: flex; gap: 1rem; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-secondary);';
-
-        if (unleadedData.length >= 2) {
-            const item = document.createElement('div');
-            item.innerHTML = '<span style="display: inline-block; width: 12px; height: 2px; background: #3b82f6; margin-right: 4px; vertical-align: middle;"></span>Unleaded';
-            legend.appendChild(item);
-        }
-
-        if (premiumData.length >= 2) {
-            const item = document.createElement('div');
-            item.innerHTML = '<span style="display: inline-block; width: 12px; height: 2px; background: #8b5cf6; margin-right: 4px; vertical-align: middle;"></span>Premium';
-            legend.appendChild(item);
-        }
-
-        if (dieselData.length >= 2) {
-            const item = document.createElement('div');
-            item.innerHTML = '<span style="display: inline-block; width: 12px; height: 2px; background: #10b981; margin-right: 4px; vertical-align: middle;"></span>Diesel';
-            legend.appendChild(item);
-        }
-
-        chartDiv.appendChild(legend);
+        // Create new Chart.js chart
+        const ctx = canvas.getContext('2d');
+        this.priceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: '#1f2937',
+                        bodyColor: '#1f2937',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y.toFixed(1) + '¢/L';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45,
+                            font: {
+                                size: 10
+                            }
+                        }
+                    },
+                    y: {
+                        display: true,
+                        beginAtZero: false,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toFixed(0) + '¢';
+                            },
+                            font: {
+                                size: 10
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
         // Show container
         container.style.display = 'block';

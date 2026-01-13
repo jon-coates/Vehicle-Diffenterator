@@ -1,0 +1,75 @@
+{
+  "latest": {
+    "unleaded": 163.9,
+    "premium": 183.9,
+    "diesel": 178.9,
+    "dataPoints": {
+      "unleaded": 1245,
+      "premium": 987,
+      "diesel": 856
+    }
+  },
+  "averages": {
+    "last7Days": {
+      "unleaded": 165.3,
+      "premium": 185.2,
+      "diesel": 179.8,
+      "dataPoints": {
+        "unleaded": 8715,
+        "premium": 6909,
+        "diesel": 5992
+      }
+    },
+    "last30Days": {
+      "unleaded": 182.7,
+      "premium": 202.4,
+      "diesel": 188.5,
+      "dataPoints": {
+        "unleaded": 37350,
+        "premium": 29613,
+        "diesel": 25680
+      }
+    }
+  },
+  "history": [
+    {"date": "2025-12-15", "unleaded": 207.9, "premium": 227.9, "diesel": 202.9},
+    {"date": "2025-12-16", "unleaded": 203.9, "premium": 223.9, "diesel": 199.9},
+    {"date": "2025-12-17", "unleaded": 199.9, "premium": 219.9, "diesel": 197.9},
+    {"date": "2025-12-18", "unleaded": 196.9, "premium": 216.9, "diesel": 195.9},
+    {"date": "2025-12-19", "unleaded": 193.9, "premium": 213.9, "diesel": 193.9},
+    {"date": "2025-12-20", "unleaded": 189.9, "premium": 209.9, "diesel": 191.9},
+    {"date": "2025-12-21", "unleaded": 186.9, "premium": 206.9, "diesel": 189.9},
+    {"date": "2025-12-22", "unleaded": 183.9, "premium": 203.9, "diesel": 187.9},
+    {"date": "2025-12-23", "unleaded": 182.9, "premium": 202.9, "diesel": 186.9},
+    {"date": "2025-12-24", "unleaded": 181.9, "premium": 201.9, "diesel": 185.9},
+    {"date": "2025-12-25", "unleaded": 179.9, "premium": 199.9, "diesel": 184.9},
+    {"date": "2025-12-26", "unleaded": 177.9, "premium": 197.9, "diesel": 183.9},
+    {"date": "2025-12-27", "unleaded": 175.9, "premium": 195.9, "diesel": 182.9},
+    {"date": "2025-12-28", "unleaded": 173.9, "premium": 193.9, "diesel": 181.9},
+    {"date": "2025-12-29", "unleaded": 171.9, "premium": 191.9, "diesel": 180.9},
+    {"date": "2025-12-30", "unleaded": 169.9, "premium": 189.9, "diesel": 179.9},
+    {"date": "2025-12-31", "unleaded": 168.9, "premium": 188.9, "diesel": 178.9},
+    {"date": "2026-01-01", "unleaded": 166.9, "premium": 186.9, "diesel": 177.9},
+    {"date": "2026-01-02", "unleaded": 177.9, "premium": 197.9, "diesel": 182.9},
+    {"date": "2026-01-03", "unleaded": 198.9, "premium": 218.9, "diesel": 193.9},
+    {"date": "2026-01-04", "unleaded": 210.9, "premium": 230.9, "diesel": 199.9},
+    {"date": "2026-01-05", "unleaded": 214.9, "premium": 234.9, "diesel": 202.9},
+    {"date": "2026-01-06", "unleaded": 211.9, "premium": 231.9, "diesel": 201.9},
+    {"date": "2026-01-07", "unleaded": 207.9, "premium": 227.9, "diesel": 199.9},
+    {"date": "2026-01-08", "unleaded": 199.9, "premium": 219.9, "diesel": 195.9},
+    {"date": "2026-01-09", "unleaded": 189.9, "premium": 209.9, "diesel": 189.9},
+    {"date": "2026-01-10", "unleaded": 179.9, "premium": 199.9, "diesel": 184.9},
+    {"date": "2026-01-11", "unleaded": 171.9, "premium": 191.9, "diesel": 180.9},
+    {"date": "2026-01-12", "unleaded": 166.9, "premium": 186.9, "diesel": 178.9},
+    {"date": "2026-01-13", "unleaded": 163.9, "premium": 183.9, "diesel": 178.9}
+  ],
+  "lastUpdated": "2026-01-13T09:30:00.000Z",
+  "fallback": false,
+  "source": "nsw-fuelcheck-mock",
+  "metadata": {
+    "region": "Sydney",
+    "currency": "AUD",
+    "unit": "cents per litre",
+    "note": "Mock data showing typical Sydney fuel price cycle pattern"
+  }
+}

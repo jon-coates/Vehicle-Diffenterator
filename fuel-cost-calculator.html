@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         .calculator-container {
             max-width: 1600px;
@@ -1519,7 +1520,9 @@
                             <!-- Price Trend Chart -->
                             <div id="price-trend-chart-container" style="margin-top: 1rem; display: none;">
                                 <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.75rem;">30-Day Price Trend</div>
-                                <div id="price-trend-chart" style="position: relative; height: 120px; background: var(--background-light); border-radius: 8px; padding: 1rem;"></div>
+                                <div style="position: relative; height: 200px; background: var(--background-light); border-radius: 8px; padding: 1rem;">
+                                    <canvas id="price-trend-chart"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
