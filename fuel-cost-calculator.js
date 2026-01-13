@@ -8,6 +8,7 @@ class FuelCostCalculator {
         this.selectedVehicles = new Set(); // Set of selected vehicle filenames
         this.allVehiclesEfficiencyCache = null; // Cache for all vehicles' efficiency data
         this.currentView = 'table'; // Current view: 'table' or 'columns'
+        this.fuelPriceData = null; // Store full fuel price data (latest, averages, history)
         this.vehicleList = [
             { filename: 'bydSealion6.json', name: 'BYD Sealion 6' },
             { filename: 'bydSealion7.json', name: 'BYD Sealion 7' },
@@ -134,34 +135,24 @@ class FuelCostCalculator {
                 throw new Error(`API responded with status: ${response.status}`);
             }
 
-            const prices = await response.json();
+            const priceData = await response.json();
 
-            console.log('✅ Received fuel prices:', prices);
+            console.log('✅ Received fuel price data:', priceData);
 
-            // Update input fields with real prices (only if valid)
-            if (prices.unleaded && prices.unleaded > 0) {
-                const input = document.getElementById('unleaded-cost-input');
-                input.value = prices.unleaded.toFixed(1);
-                console.log(`   Unleaded: ${prices.unleaded.toFixed(1)}c/L`);
-            }
+            // Store the full price data
+            this.fuelPriceData = priceData;
 
-            if (prices.premium && prices.premium > 0) {
-                const input = document.getElementById('premium-unleaded-cost-input');
-                input.value = prices.premium.toFixed(1);
-                console.log(`   Premium: ${prices.premium.toFixed(1)}c/L`);
-            }
+            // Get the selected price period (default to 7-day)
+            const selectedPeriod = document.querySelector('input[name="price-period"]:checked')?.value || '7day';
 
-            if (prices.diesel && prices.diesel > 0) {
-                const input = document.getElementById('diesel-cost-input');
-                input.value = prices.diesel.toFixed(1);
-                console.log(`   Diesel: ${prices.diesel.toFixed(1)}c/L`);
-            }
+            // Update input fields based on selected period
+            this.updateFuelPricesFromPeriod(selectedPeriod);
 
             // Show data source info
-            if (prices.fallback) {
+            if (priceData.fallback) {
                 console.log('⚠️ Using fallback prices');
-            } else if (prices.lastUpdated) {
-                const lastUpdated = new Date(prices.lastUpdated);
+            } else if (priceData.lastUpdated) {
+                const lastUpdated = new Date(priceData.lastUpdated);
                 const timeString = lastUpdated.toLocaleString('en-AU', {
                     weekday: 'short',
                     month: 'short',
@@ -170,13 +161,15 @@ class FuelCostCalculator {
                     minute: '2-digit'
                 });
                 console.log(`   Last updated: ${timeString}`);
+                console.log(`   History: ${priceData.history?.length || 0} days`);
 
-                if (prices.dataPoints) {
-                    console.log(`   Data points: ${prices.dataPoints.unleaded} unleaded, ${prices.dataPoints.premium} premium, ${prices.dataPoints.diesel} diesel`);
+                // Show info message and trends
+                this.showFuelPriceInfo(lastUpdated, priceData);
+
+                // Show price trend chart
+                if (priceData.history && priceData.history.length > 1) {
+                    this.displayPriceTrendChart(priceData.history);
                 }
-
-                // Show info message below fuel cost inputs
-                this.showFuelPriceInfo(lastUpdated, prices.dataPoints);
             }
 
         } catch (error) {
@@ -185,9 +178,56 @@ class FuelCostCalculator {
         }
     }
 
-    showFuelPriceInfo(lastUpdated, dataPoints) {
+    updateFuelPricesFromPeriod(period) {
+        if (!this.fuelPriceData) return;
+
+        let prices;
+        let periodLabel;
+
+        switch (period) {
+            case 'latest':
+                prices = this.fuelPriceData.latest;
+                periodLabel = 'Latest';
+                break;
+            case '30day':
+                prices = this.fuelPriceData.averages?.last30Days || this.fuelPriceData.latest;
+                periodLabel = '30-Day Average';
+                break;
+            case '7day':
+            default:
+                prices = this.fuelPriceData.averages?.last7Days || this.fuelPriceData.latest;
+                periodLabel = '7-Day Average';
+                break;
+        }
+
+        console.log(`📊 Updating prices using ${periodLabel}:`, prices);
+
+        // Update input fields with selected prices (only if valid)
+        if (prices.unleaded && prices.unleaded > 0) {
+            const input = document.getElementById('unleaded-cost-input');
+            input.value = prices.unleaded.toFixed(1);
+        }
+
+        if (prices.premium && prices.premium > 0) {
+            const input = document.getElementById('premium-unleaded-cost-input');
+            input.value = prices.premium.toFixed(1);
+        }
+
+        if (prices.diesel && prices.diesel > 0) {
+            const input = document.getElementById('diesel-cost-input');
+            input.value = prices.diesel.toFixed(1);
+        }
+
+        // Update the info text to show which period is selected
+        if (this.fuelPriceData.lastUpdated) {
+            this.showFuelPriceInfo(new Date(this.fuelPriceData.lastUpdated), this.fuelPriceData, periodLabel);
+        }
+    }
+
+    showFuelPriceInfo(lastUpdated, priceData, periodLabel = null) {
         const infoDiv = document.getElementById('fuel-price-info');
         const infoText = document.getElementById('fuel-price-info-text');
+        const trendsDiv = document.getElementById('fuel-price-trends');
 
         if (!infoDiv || !infoText) return;
 
@@ -199,19 +239,70 @@ class FuelCostCalculator {
             minute: '2-digit'
         });
 
-        // Calculate total data points
-        const totalStations = dataPoints ?
-            (dataPoints.unleaded || 0) + (dataPoints.premium || 0) + (dataPoints.diesel || 0) : 0;
-
         // Build the message
         let message = '⛽ Fuel prices based on real NSW FuelCheck data';
-        if (totalStations > 0) {
-            message += ` (${totalStations.toLocaleString()} prices)`;
+        if (periodLabel) {
+            message += ` (${periodLabel})`;
         }
-        message += ` • Last updated: ${timeString}`;
+        if (priceData.latest?.dataPoints) {
+            const totalStations =
+                (priceData.latest.dataPoints.unleaded || 0) +
+                (priceData.latest.dataPoints.premium || 0) +
+                (priceData.latest.dataPoints.diesel || 0);
+            if (totalStations > 0) {
+                message += ` • ${totalStations.toLocaleString()} stations`;
+            }
+        }
+        message += ` • Updated: ${timeString}`;
+
+        if (priceData.history?.length) {
+            message += ` • ${priceData.history.length} days history`;
+        }
 
         infoText.textContent = message;
+
+        // Display trends
+        if (trendsDiv && priceData.history && priceData.history.length >= 2) {
+            this.displayPriceTrends(trendsDiv, priceData);
+        }
+
         infoDiv.style.display = 'block';
+    }
+
+    displayPriceTrends(trendsDiv, priceData) {
+        if (!priceData.history || priceData.history.length < 2) {
+            trendsDiv.innerHTML = '';
+            return;
+        }
+
+        // Get latest and 7-day-old prices for trend calculation
+        const latest = priceData.latest;
+        const weekAgo = priceData.history.length >= 7 ? priceData.history[6] : priceData.history[priceData.history.length - 1];
+
+        const createTrendIndicator = (label, latestPrice, oldPrice) => {
+            if (!latestPrice || !oldPrice) return '';
+
+            const change = latestPrice - oldPrice;
+            const percentChange = (change / oldPrice) * 100;
+            const arrow = change > 0 ? '↑' : change < 0 ? '↓' : '→';
+            const color = change > 0 ? '#ef4444' : change < 0 ? '#10b981' : '#6b7280';
+            const sign = change > 0 ? '+' : '';
+
+            return `
+                <div style="font-size: 0.85rem;">
+                    <span style="font-weight: 600; color: var(--text-primary);">${label}:</span>
+                    <span style="color: ${color}; font-weight: 600; margin-left: 0.25rem;">
+                        ${arrow} ${sign}${change.toFixed(1)}¢ (${sign}${percentChange.toFixed(1)}%)
+                    </span>
+                </div>
+            `;
+        };
+
+        trendsDiv.innerHTML = `
+            ${createTrendIndicator('Unleaded', latest.unleaded, weekAgo.unleaded)}
+            ${createTrendIndicator('Premium', latest.premium, weekAgo.premium)}
+            ${createTrendIndicator('Diesel', latest.diesel, weekAgo.diesel)}
+        `;
     }
 
     initVehicleDropdown() {
@@ -339,6 +430,16 @@ class FuelCostCalculator {
 
     setupEventListeners() {
         // Vehicle selection is handled in initVehicleDropdown()
+
+        // Price period selection - update prices when changed
+        document.querySelectorAll('input[name="price-period"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.updateFuelPricesFromPeriod(e.target.value);
+                if (this.canCalculate()) {
+                    this.calculateFuelCosts();
+                }
+            });
+        });
 
         // Driving type selection - auto-calculate on change
         document.querySelectorAll('.driving-type-radio').forEach(radio => {
@@ -1880,6 +1981,114 @@ class FuelCostCalculator {
         const totalCount = tableRows.length;
         const filterCountElement = document.getElementById('filter-count');
         filterCountElement.textContent = `${totalCount} variants`;
+    }
+
+    displayPriceTrendChart(history) {
+        const container = document.getElementById('price-trend-chart-container');
+        const chartDiv = document.getElementById('price-trend-chart');
+
+        if (!container || !chartDiv || !history || history.length < 2) {
+            if (container) container.style.display = 'none';
+            return;
+        }
+
+        // Show last 30 days
+        const chartData = history.slice(0, 30).reverse();
+
+        // Extract data for each fuel type
+        const unleadedData = chartData.map(d => d.unleaded).filter(v => v != null);
+        const premiumData = chartData.map(d => d.premium).filter(v => v != null);
+        const dieselData = chartData.map(d => d.diesel).filter(v => v != null);
+
+        if (unleadedData.length === 0 && premiumData.length === 0 && dieselData.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+
+        // Find min and max across all fuel types for scaling
+        const allPrices = [...unleadedData, ...premiumData, ...dieselData];
+        const minPrice = Math.min(...allPrices);
+        const maxPrice = Math.max(...allPrices);
+        const priceRange = maxPrice - minPrice;
+        const padding = priceRange * 0.1; // 10% padding
+
+        // Chart dimensions
+        const width = chartDiv.clientWidth - 32; // Account for padding
+        const height = 88; // Fixed height for the chart area
+
+        // Create SVG
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', width);
+        svg.setAttribute('height', height);
+        svg.style.display = 'block';
+
+        // Helper to create a line path
+        const createLine = (data, color) => {
+            if (data.length < 2) return null;
+
+            const points = data.map((price, index) => {
+                const x = (index / (data.length - 1)) * width;
+                const y = height - ((price - (minPrice - padding)) / (priceRange + 2 * padding)) * height;
+                return `${x},${y}`;
+            }).join(' ');
+
+            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            polyline.setAttribute('points', points);
+            polyline.setAttribute('fill', 'none');
+            polyline.setAttribute('stroke', color);
+            polyline.setAttribute('stroke-width', '2');
+            polyline.setAttribute('stroke-linecap', 'round');
+            polyline.setAttribute('stroke-linejoin', 'round');
+
+            return polyline;
+        };
+
+        // Add lines for each fuel type
+        if (unleadedData.length >= 2) {
+            const line = createLine(unleadedData, '#3b82f6'); // Blue
+            if (line) svg.appendChild(line);
+        }
+
+        if (premiumData.length >= 2) {
+            const line = createLine(premiumData, '#8b5cf6'); // Purple
+            if (line) svg.appendChild(line);
+        }
+
+        if (dieselData.length >= 2) {
+            const line = createLine(dieselData, '#10b981'); // Green
+            if (line) svg.appendChild(line);
+        }
+
+        // Clear previous chart and add new one
+        chartDiv.innerHTML = '';
+        chartDiv.appendChild(svg);
+
+        // Add legend
+        const legend = document.createElement('div');
+        legend.style.cssText = 'display: flex; gap: 1rem; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-secondary);';
+
+        if (unleadedData.length >= 2) {
+            const item = document.createElement('div');
+            item.innerHTML = '<span style="display: inline-block; width: 12px; height: 2px; background: #3b82f6; margin-right: 4px; vertical-align: middle;"></span>Unleaded';
+            legend.appendChild(item);
+        }
+
+        if (premiumData.length >= 2) {
+            const item = document.createElement('div');
+            item.innerHTML = '<span style="display: inline-block; width: 12px; height: 2px; background: #8b5cf6; margin-right: 4px; vertical-align: middle;"></span>Premium';
+            legend.appendChild(item);
+        }
+
+        if (dieselData.length >= 2) {
+            const item = document.createElement('div');
+            item.innerHTML = '<span style="display: inline-block; width: 12px; height: 2px; background: #10b981; margin-right: 4px; vertical-align: middle;"></span>Diesel';
+            legend.appendChild(item);
+        }
+
+        chartDiv.appendChild(legend);
+
+        // Show container
+        container.style.display = 'block';
     }
 }
 

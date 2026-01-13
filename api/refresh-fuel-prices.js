@@ -101,19 +101,21 @@ export default async function handler(req, res) {
     const data = await response.json();
     console.log(`📊 Received ${data.prices?.length || 0} prices from ${data.stations?.length || 0} stations`);
 
-    // Calculate average prices
-    const prices = calculateAveragePrices(data);
-    console.log('💰 Calculated average prices:', prices);
+    // Calculate average prices for today
+    const todaysPrices = calculateAveragePrices(data);
+    console.log('💰 Calculated average prices:', todaysPrices);
 
-    // Store in Edge Config
-    await updateEdgeConfig(prices);
+    // Update Edge Config with historical data and averages
+    const priceData = await updateEdgeConfigWithHistory(todaysPrices);
 
     console.log('✅ Fuel prices refreshed successfully!');
+    console.log(`📈 7-day avg: Unleaded ${priceData.averages.last7Days.unleaded?.toFixed(1)}c, Premium ${priceData.averages.last7Days.premium?.toFixed(1)}c, Diesel ${priceData.averages.last7Days.diesel?.toFixed(1)}c`);
+    console.log(`📈 30-day avg: Unleaded ${priceData.averages.last30Days.unleaded?.toFixed(1)}c, Premium ${priceData.averages.last30Days.premium?.toFixed(1)}c, Diesel ${priceData.averages.last30Days.diesel?.toFixed(1)}c`);
 
     return res.status(200).json({
       success: true,
       message: 'Fuel prices refreshed successfully',
-      prices: prices,
+      data: priceData,
       timestamp: new Date().toISOString()
     });
 
@@ -175,20 +177,91 @@ function calculateAveragePrices(data) {
 }
 
 /**
- * Update Edge Config with new prices
+ * Update Edge Config with historical prices and calculate averages
+ * Maintains up to 90 days of history
  * Uses Vercel's Management API since Edge Config doesn't have a write SDK
  */
-async function updateEdgeConfig(prices) {
+async function updateEdgeConfigWithHistory(todaysPrices) {
   const edgeConfigId = process.env.EDGE_CONFIG_ID;
   const vercelToken = process.env.VERCEL_TOKEN;
 
   if (!edgeConfigId || !vercelToken) {
     console.warn('⚠️ Edge Config not configured, using fallback storage');
-    // Fallback: You could write to a GitHub Gist or other storage here
-    return;
+    // Return a simple structure for testing without Edge Config
+    return {
+      latest: todaysPrices,
+      averages: {
+        last7Days: todaysPrices,
+        last30Days: todaysPrices
+      },
+      history: [],
+      lastUpdated: new Date().toISOString()
+    };
   }
 
-  // Update Edge Config via Vercel API
+  // Step 1: Read existing data from Edge Config
+  console.log('📖 Reading existing price history...');
+  let existingData = null;
+  try {
+    const readResponse = await fetch(
+      `https://api.vercel.com/v1/edge-config/${edgeConfigId}/item/fuel_prices`,
+      {
+        headers: {
+          'Authorization': `Bearer ${vercelToken}`
+        }
+      }
+    );
+
+    if (readResponse.ok) {
+      existingData = await readResponse.json();
+      console.log(`📚 Found ${existingData?.history?.length || 0} days of existing history`);
+    }
+  } catch (error) {
+    console.log('ℹ️ No existing history found, starting fresh');
+  }
+
+  // Step 2: Build history array
+  let history = existingData?.history || [];
+
+  // Add today's prices to history
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  const todayEntry = {
+    date: today,
+    unleaded: todaysPrices.unleaded,
+    premium: todaysPrices.premium,
+    diesel: todaysPrices.diesel,
+    dataPoints: todaysPrices.dataPoints
+  };
+
+  // Check if today's entry already exists (in case cron runs multiple times)
+  const existingTodayIndex = history.findIndex(entry => entry.date === today);
+  if (existingTodayIndex >= 0) {
+    // Update existing entry for today
+    history[existingTodayIndex] = todayEntry;
+    console.log('🔄 Updated today\'s price entry');
+  } else {
+    // Add new entry
+    history.push(todayEntry);
+    console.log('➕ Added new price entry for today');
+  }
+
+  // Sort by date (newest first) and keep only last 90 days
+  history.sort((a, b) => new Date(b.date) - new Date(a.date));
+  history = history.slice(0, 90);
+
+  // Step 3: Calculate averages
+  const averages = calculateAverages(history);
+  console.log(`📊 Calculated averages from ${history.length} days of data`);
+
+  // Step 4: Build final data structure
+  const priceData = {
+    latest: todaysPrices,
+    averages: averages,
+    history: history,
+    lastUpdated: new Date().toISOString()
+  };
+
+  // Step 5: Write to Edge Config
   const response = await fetch(
     `https://api.vercel.com/v1/edge-config/${edgeConfigId}/items`,
     {
@@ -202,7 +275,7 @@ async function updateEdgeConfig(prices) {
           {
             operation: 'upsert',
             key: 'fuel_prices',
-            value: prices
+            value: priceData
           }
         ]
       })
@@ -214,5 +287,38 @@ async function updateEdgeConfig(prices) {
     throw new Error(`Failed to update Edge Config: ${error}`);
   }
 
-  console.log('✅ Edge Config updated successfully');
+  console.log('✅ Edge Config updated successfully with historical data');
+
+  return priceData;
+}
+
+/**
+ * Calculate 7-day and 30-day averages from history
+ */
+function calculateAverages(history) {
+  const calculate = (days) => {
+    const subset = history.slice(0, Math.min(days, history.length));
+
+    if (subset.length === 0) {
+      return { unleaded: null, premium: null, diesel: null };
+    }
+
+    const sum = subset.reduce((acc, entry) => ({
+      unleaded: acc.unleaded + (entry.unleaded || 0),
+      premium: acc.premium + (entry.premium || 0),
+      diesel: acc.diesel + (entry.diesel || 0),
+      count: acc.count + 1
+    }), { unleaded: 0, premium: 0, diesel: 0, count: 0 });
+
+    return {
+      unleaded: sum.count > 0 ? sum.unleaded / sum.count : null,
+      premium: sum.count > 0 ? sum.premium / sum.count : null,
+      diesel: sum.count > 0 ? sum.diesel / sum.count : null
+    };
+  };
+
+  return {
+    last7Days: calculate(7),
+    last30Days: calculate(30)
+  };
 }

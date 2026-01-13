@@ -120,17 +120,43 @@ git push
 
 Vercel will automatically deploy and set up the cron job!
 
-### Step 7: Manually Trigger First Price Update
+### Step 7: Populate Initial Data
 
-The cron job runs daily, but you can trigger it manually to populate initial data:
+You have two options to get started with fuel price data:
 
-**Option A - Via Browser:**
+#### Option A: Use Dummy Data (Recommended for Testing)
+
+This populates 90 days of realistic dummy data so you can immediately see all features (trends, charts, averages):
+
+**Via Browser:**
+```
+https://your-app.vercel.app/api/populate-dummy-data?secret=your_cron_secret
+```
+
+**Via Terminal:**
+```bash
+curl "https://your-app.vercel.app/api/populate-dummy-data?secret=your_cron_secret"
+```
+
+This generates:
+- 90 days of historical price data
+- Realistic weekly price cycles (mimicking Australian fuel markets)
+- Random daily variations
+- Calculated 7-day and 30-day averages
+
+You can replace this with real data anytime by running the actual refresh (Option B).
+
+#### Option B: Fetch Real Data from NSW API
+
+This fetches current real prices (but no history until the cron runs daily):
+
+**Via Browser:**
 ```
 https://your-app.vercel.app/api/refresh-fuel-prices
 ```
 Add header: `Authorization: Bearer your_cron_secret`
 
-**Option B - Via Terminal:**
+**Via Terminal:**
 ```bash
 curl -X GET "https://your-app.vercel.app/api/refresh-fuel-prices" \
   -H "Authorization: Bearer your_cron_secret"
@@ -141,6 +167,8 @@ Replace:
 - `your_cron_secret` with the `CRON_SECRET` you set
 
 You should see a success response with fuel prices.
+
+**Note:** With Option B, historical features (trends, averages) will only work after the cron job has run for 7-30 days. Use Option A to see everything working immediately!
 
 ## 🧪 Testing
 
@@ -296,14 +324,82 @@ Vehicle Diffenterator/
 **NSW Fuel API:**
 - https://api.nsw.gov.au/Product/Index/22
 
+## 📊 Historical Data & Price Trends (NEW!)
+
+The system now includes advanced price tracking features:
+
+### Features
+
+**1. 90-Day Price History**
+- Automatically stores last 90 days of fuel prices
+- One daily snapshot at 6 AM
+- Survives across deployments (stored in Edge Config)
+
+**2. Price Averaging**
+Users can choose between:
+- **Latest** - Today's median prices
+- **7-Day Average** - Smooths out daily volatility (default)
+- **30-Day Average** - Long-term baseline pricing
+
+**3. Trend Indicators**
+- Shows price changes over last 7 days
+- Color-coded: 🔴 Red (increase) | 🟢 Green (decrease)
+- Displays both absolute change (¢) and percentage
+
+**4. Price Trend Chart**
+- Visual 30-day sparkline chart
+- Shows all three fuel types
+- Helps users understand price cycles
+
+### How It Works
+
+```
+Day 1: Cron runs → Stores today's prices
+Day 2: Cron runs → Stores today's prices, calculates 2-day average
+Day 7: Full 7-day averaging available
+Day 30: Full 30-day averaging available
+Day 90: Maximum history reached, oldest day dropped
+```
+
+### Data Structure
+
+```json
+{
+  "latest": {
+    "unleaded": 182.5,
+    "premium": 205.3,
+    "diesel": 195.7,
+    "dataPoints": { "unleaded": 1250, "premium": 890, "diesel": 1100 }
+  },
+  "averages": {
+    "last7Days": { "unleaded": 183.2, "premium": 206.1, "diesel": 196.3 },
+    "last30Days": { "unleaded": 185.4, "premium": 207.8, "diesel": 197.2 }
+  },
+  "history": [
+    { "date": "2026-01-13", "unleaded": 182.5, "premium": 205.3, "diesel": 195.7 },
+    { "date": "2026-01-12", "unleaded": 183.1, "premium": 206.0, "diesel": 196.2 },
+    // ... up to 90 days
+  ],
+  "lastUpdated": "2026-01-13T06:00:00.000Z"
+}
+```
+
+### Testing with Dummy Data
+
+Use `/api/populate-dummy-data?secret=YOUR_SECRET` to generate 90 days of realistic data:
+- Mimics Australian weekly price cycles (7-day peaks and troughs)
+- Includes random daily variations (±3¢)
+- Gradual long-term trends
+- Instant access to all features without waiting
+
 ## 💡 Future Enhancements
 
 Ideas to expand this:
 - 📍 **Location-based pricing**: Use NSW API's location endpoint for suburb-specific prices
-- 📈 **Price trends**: Store historical data and show price graphs
-- 🔔 **Price alerts**: Notify users when prices drop
+- 🔔 **Price alerts**: Notify users when prices drop below threshold
 - ⚡ **Electricity prices**: Add real-time electricity pricing for EVs
 - 🗺️ **Cheapest nearby**: Show map of cheapest fuel stations
+- 📧 **Weekly reports**: Email summary of price trends
 
 ## ❓ Questions?
 

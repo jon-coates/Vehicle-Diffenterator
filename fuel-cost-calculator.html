@@ -1471,6 +1471,26 @@
 
                         <div class="control-group">
                             <label class="control-label">Fuel & Energy Costs:</label>
+
+                            <!-- Price Averaging Period Selector -->
+                            <div style="margin-bottom: 1rem;">
+                                <label for="price-period-select" style="display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Price Period:</label>
+                                <div class="driving-type-group">
+                                    <div class="driving-type-option">
+                                        <input type="radio" id="price-period-latest" name="price-period" value="latest" class="driving-type-radio">
+                                        <label for="price-period-latest" class="driving-type-label">Latest</label>
+                                    </div>
+                                    <div class="driving-type-option">
+                                        <input type="radio" id="price-period-7day" name="price-period" value="7day" class="driving-type-radio" checked>
+                                        <label for="price-period-7day" class="driving-type-label">7-Day Average</label>
+                                    </div>
+                                    <div class="driving-type-option">
+                                        <input type="radio" id="price-period-30day" name="price-period" value="30day" class="driving-type-radio">
+                                        <label for="price-period-30day" class="driving-type-label">30-Day Average</label>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem;">
                                 <div>
                                     <label for="unleaded-cost-input" style="display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Unleaded (¢/L):</label>
@@ -1489,9 +1509,17 @@
                                     <input type="number" id="kwh-cost-input" class="control-input" min="0" step="0.01" value="0.30" placeholder="Enter electricity cost">
                                 </div>
                             </div>
-                            <!-- Fuel Price Info -->
-                            <div id="fuel-price-info" style="margin-top: 0.75rem; padding: 0.5rem; background-color: rgba(59, 130, 246, 0.1); border-left: 3px solid #3b82f6; border-radius: 4px; font-size: 0.85rem; color: var(--text-secondary); display: none;">
-                                <span id="fuel-price-info-text">Fuel prices based on real NSW FuelCheck data</span>
+
+                            <!-- Fuel Price Info with Trend -->
+                            <div id="fuel-price-info" style="margin-top: 0.75rem; padding: 0.75rem; background-color: rgba(59, 130, 246, 0.1); border-left: 3px solid #3b82f6; border-radius: 4px; font-size: 0.85rem; color: var(--text-secondary); display: none;">
+                                <div id="fuel-price-info-text">Fuel prices based on real NSW FuelCheck data</div>
+                                <div id="fuel-price-trends" style="margin-top: 0.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap;"></div>
+                            </div>
+
+                            <!-- Price Trend Chart -->
+                            <div id="price-trend-chart-container" style="margin-top: 1rem; display: none;">
+                                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.75rem;">30-Day Price Trend</div>
+                                <div id="price-trend-chart" style="position: relative; height: 120px; background: var(--background-light); border-radius: 8px; padding: 1rem;"></div>
                             </div>
                         </div>
                     </div>
