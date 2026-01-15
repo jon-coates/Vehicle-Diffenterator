@@ -3,6 +3,8 @@
  * Scheduled to run once per day via vercel.json
  */
 
+import { get } from '@vercel/edge-config';
+
 export default async function handler(req, res) {
   // Security: Verify this is a legitimate cron request from Vercel
   const authHeader = req.headers.authorization;
@@ -178,14 +180,15 @@ function calculateAveragePrices(data) {
 /**
  * Update Edge Config with historical prices and calculate averages
  * Maintains up to 30 days of history (reduced to stay within size limits)
- * Uses Vercel's Management API since Edge Config doesn't have a write SDK
+ * Uses SDK for reading, Management API for writing (SDK is read-only)
  */
 async function updateEdgeConfigWithHistory(todaysPrices) {
   const edgeConfigId = process.env.EDGE_CONFIG_ID;
   const vercelToken = process.env.VERCEL_TOKEN;
 
+  // These are needed for writing via Management API
   if (!edgeConfigId || !vercelToken) {
-    console.warn('⚠️ Edge Config not configured, using fallback storage');
+    console.warn('⚠️ Edge Config write credentials not configured, using fallback storage');
     // Return a simple structure for testing without Edge Config
     return {
       latest: todaysPrices,
@@ -198,25 +201,19 @@ async function updateEdgeConfigWithHistory(todaysPrices) {
     };
   }
 
-  // Step 1: Read existing data from Edge Config
+  // Step 1: Read existing data from Edge Config using SDK (same as other endpoints)
   console.log('📖 Reading existing price history...');
   let existingData = null;
   try {
-    const readResponse = await fetch(
-      `https://api.vercel.com/v1/edge-config/${edgeConfigId}/item/fuel_prices`,
-      {
-        headers: {
-          'Authorization': `Bearer ${vercelToken}`
-        }
-      }
-    );
-
-    if (readResponse.ok) {
-      existingData = await readResponse.json();
+    existingData = await get('fuel_prices');
+    if (existingData) {
       console.log(`📚 Found ${existingData?.history?.length || 0} days of existing history`);
+    } else {
+      console.log('ℹ️ No existing history found, starting fresh');
     }
   } catch (error) {
-    console.log('ℹ️ No existing history found, starting fresh');
+    console.error('⚠️ Error reading existing history:', error.message);
+    console.log('ℹ️ Will start with empty history');
   }
 
   // Step 2: Build history array
