@@ -7,7 +7,7 @@ class FuelCostCalculator {
         this.currentCalculations = [];
         this.selectedVehicles = new Set(); // Set of selected vehicle filenames
         this.allVehiclesEfficiencyCache = null; // Cache for all vehicles' efficiency data
-        this.currentView = 'table'; // Current view: 'table' or 'columns'
+        this.currentView = 'columns'; // Current view: 'table' or 'columns'
         this.fuelPriceData = null; // Store full fuel price data (latest, averages, history)
         this.priceChart = null; // Chart.js instance for price trend chart
         this.vehicleList = [
@@ -827,6 +827,37 @@ class FuelCostCalculator {
         return null;
     }
 
+    getCO2EmissionsRate(variant) {
+        const engine = variant.engine || {};
+        const drivingType = document.querySelector('input[name="driving-type"]:checked').value;
+
+        if (drivingType === 'standard') {
+            const combined = engine.emissionControlLevelCo2LevelCombined;
+            if (combined && combined !== 'Not Available') {
+                return parseFloat(combined);
+            }
+            return null;
+        } else {
+            // Custom mix: blend urban/highway CO2 rates using slider percentages
+            const urban = engine.emissionControlLevelCo2LevelUrban;
+            const highway = engine.emissionControlLevelCo2LevelCntryHighway;
+
+            if (!urban || !highway || urban === 'Not Available' || highway === 'Not Available') {
+                // Fallback to combined if urban/highway not available
+                const combined = engine.emissionControlLevelCo2LevelCombined;
+                if (combined && combined !== 'Not Available') {
+                    return parseFloat(combined);
+                }
+                return null;
+            }
+
+            const countryPercentage = parseInt(document.getElementById('country-slider').value) / 100;
+            const urbanPercentage = 1 - countryPercentage;
+
+            return (parseFloat(urban) * urbanPercentage) + (parseFloat(highway) * countryPercentage);
+        }
+    }
+
     getFuelTypeForCostCalculation(variant, hasFuelConsumptionData) {
         // If there's fuel consumption data, we need to determine the actual fuel type used
         // For PHEVs and hybrids, the primary fuelType might be "Electric" but they still use fuel
@@ -1001,6 +1032,10 @@ class FuelCostCalculator {
             // Combined cost for hybrid vehicles, or single cost for pure ICE/EV
             const totalCost = fuelCost + electricityCost;
 
+            // Calculate CO2 emissions
+            const co2RateGPerKm = this.getCO2EmissionsRate(variant);
+            const co2TotalKg = co2RateGPerKm !== null ? (distance * co2RateGPerKm) / 1000 : null;
+
             return {
                 variant: variant,
                 vehicleName: vehicleName,
@@ -1016,13 +1051,15 @@ class FuelCostCalculator {
                 costPerLitre: costPerLitre,
                 costPerKwh: costPerKwh,
                 costPerLitreCents: costPerLitre * 100, // Store in cents for display
-                fuelType: fuelConsumptionRate !== null 
-                    ? this.getFuelTypeForCostCalculation(variant, true) 
+                fuelType: fuelConsumptionRate !== null
+                    ? this.getFuelTypeForCostCalculation(variant, true)
                     : (variant.fuelType || 'Unknown'),
                 isHybrid: fuelConsumptionRate !== null && electricConsumptionRate !== null,
                 isElectric: fuelConsumptionRate === null && electricConsumptionRate !== null,
                 isICE: fuelConsumptionRate !== null && electricConsumptionRate === null,
-                price: variant.price || null // Include vehicle price
+                price: variant.price || null, // Include vehicle price
+                co2RateGPerKm: co2RateGPerKm,
+                co2TotalKg: co2TotalKg
             };
         }).filter(calc => calc.hasData); // Only include variants with valid data
 
@@ -1101,6 +1138,65 @@ class FuelCostCalculator {
         const costSuffix = calcType === 'annual' ? '/year' : '';
         const costDifference = mostExpensive.totalCost - cheapest.totalCost;
 
+        // Find cleanest and dirtiest vehicles by CO2
+        const calcsWithCO2 = calculations.filter(c => c.co2TotalKg !== null);
+        const sortedByCO2 = [...calcsWithCO2].sort((a, b) => a.co2TotalKg - b.co2TotalKg);
+        const cleanest = sortedByCO2.length > 0 ? sortedByCO2[0] : null;
+        const dirtiest = sortedByCO2.length > 1 ? sortedByCO2[sortedByCO2.length - 1] : null;
+
+        let emissionsSummaryHTML = '';
+        if (cleanest) {
+            const cleanestDetails = buildVehicleDetails(cleanest);
+            const dirtiestDetails = dirtiest ? buildVehicleDetails(dirtiest) : null;
+            const co2Suffix = calcType === 'annual' ? '/year' : '';
+
+            emissionsSummaryHTML = `
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid var(--border-color);">
+                        <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 1rem; font-size: 1.1rem;">Emissions</div>
+                        <div class="summary-rows">
+                            <div class="summary-row cleanest-row">
+                                <div class="summary-row-content">
+                                    <div class="summary-vehicle-details">
+                                        <div class="summary-vehicle-make-model">${cleanestDetails.makeModel} ${cleanestDetails.variant}</div>
+                                        ${cleanestDetails.config ? `<div class="summary-vehicle-config">${cleanestDetails.config}</div>` : ''}
+                                        <div class="summary-vehicle-badges">
+                                            <span class="table-badge badge-cleanest">Cleanest</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="summary-row-cost cleanest">${parseFloat(cleanest.co2TotalKg.toFixed(1)).toLocaleString('en-AU')} kg CO2${co2Suffix}</div>
+                            </div>`;
+
+            if (dirtiest) {
+                const co2Difference = dirtiest.co2TotalKg - cleanest.co2TotalKg;
+                emissionsSummaryHTML += `
+                            <div class="summary-row dirtiest-row">
+                                <div class="summary-row-content">
+                                    <div class="summary-vehicle-details">
+                                        <div class="summary-vehicle-make-model">${dirtiestDetails.makeModel} ${dirtiestDetails.variant}</div>
+                                        ${dirtiestDetails.config ? `<div class="summary-vehicle-config">${dirtiestDetails.config}</div>` : ''}
+                                        <div class="summary-vehicle-badges">
+                                            <span class="table-badge badge-dirtiest">Most Emissions</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="summary-row-cost dirtiest">${parseFloat(dirtiest.co2TotalKg.toFixed(1)).toLocaleString('en-AU')} kg CO2${co2Suffix}</div>
+                            </div>
+                            <div class="summary-row difference-row">
+                                <div class="summary-row-content">
+                                    <div class="summary-vehicle-details">
+                                        <div class="summary-vehicle-make-model">CO2 Difference</div>
+                                    </div>
+                                </div>
+                                <div class="summary-row-cost highlight">${parseFloat(co2Difference.toFixed(1)).toLocaleString('en-AU')} kg CO2${co2Suffix}</div>
+                            </div>`;
+            }
+
+            emissionsSummaryHTML += `
+                        </div>
+                    </div>`;
+        }
+
         resultsSummary.innerHTML = `
             <div class="summary-title">Results</div>
             <div class="summary-content">
@@ -1138,6 +1234,7 @@ class FuelCostCalculator {
                         <div class="summary-row-cost highlight">${this.formatCurrency(costDifference)}${costSuffix}</div>
                     </div>
                 </div>
+                ${emissionsSummaryHTML}
             </div>
         `;
         
@@ -1155,10 +1252,18 @@ class FuelCostCalculator {
         resultsTableBody.innerHTML = '';
         variantFilter.value = '';
 
+        // Determine cleanest/dirtiest for CO2 badges
+        const calcsWithCO2 = calculations.filter(c => c.co2TotalKg !== null);
+        const sortedByCO2 = [...calcsWithCO2].sort((a, b) => a.co2TotalKg - b.co2TotalKg);
+        const cleanestCalc = sortedByCO2.length > 0 ? sortedByCO2[0] : null;
+        const dirtiestCalc = sortedByCO2.length > 1 ? sortedByCO2[sortedByCO2.length - 1] : null;
+
         // Create table rows
         calculations.forEach((calc, index) => {
             const isCheapest = index === 0;
             const isMostExpensive = index === calculations.length - 1 && calculations.length > 1;
+            const isCleanest = cleanestCalc && calc === cleanestCalc;
+            const isDirtiest = dirtiestCalc && calc === dirtiestCalc;
 
             const row = document.createElement('tr');
             row.className = `${isCheapest ? 'cheapest' : ''} ${isMostExpensive ? 'most-expensive' : ''}`.trim();
@@ -1172,12 +1277,14 @@ class FuelCostCalculator {
                 variant.engineLiters ? `${variant.engineLiters}L` : '',
                 variant.fuelType || ''
             ].filter(Boolean).join(' • ');
-            
+
             const costSuffix = calcType === 'annual' ? '/year' : '';
 
             let badges = '';
             if (isCheapest) badges += '<span class="table-badge badge-cheapest">Cheapest</span>';
             if (isMostExpensive) badges += '<span class="table-badge badge-expensive">Most Expensive</span>';
+            if (isCleanest) badges += '<span class="table-badge badge-cleanest">Cleanest</span>';
+            if (isDirtiest) badges += '<span class="table-badge badge-dirtiest">Most Emissions</span>';
 
             // Build consumption display
             let consumptionDisplay = '';
@@ -1231,15 +1338,27 @@ class FuelCostCalculator {
                 totalCostDisplay = `${this.formatCurrency(calc.totalCost)}${costSuffix}`;
             }
 
+            // Build CO2 rate display
+            const co2RateDisplay = calc.co2RateGPerKm !== null
+                ? `${parseFloat(calc.co2RateGPerKm.toFixed(0)).toLocaleString('en-AU')} g/km`
+                : 'N/A';
+
+            // Build total CO2 display
+            const co2TotalDisplay = calc.co2TotalKg !== null
+                ? `${parseFloat(calc.co2TotalKg.toFixed(1)).toLocaleString('en-AU')} kg${costSuffix}`
+                : 'N/A';
+
             row.innerHTML = `
                 <td>
                     <div class="table-variant-name">${makeModel} ${variantName}${badges}</div>
                     <div class="table-variant-details">${variantDetails}</div>
                 </td>
                 <td class="table-value">${consumptionDisplay}</td>
+                <td class="table-value">${co2RateDisplay}</td>
                 <td class="table-value">${energyDisplay}</td>
                 <td class="table-value">${costPerUnitDisplay}</td>
                 <td class="table-value total">${totalCostDisplay}</td>
+                <td class="table-value">${co2TotalDisplay}</td>
             `;
 
             // Add data attributes for filtering
@@ -1300,9 +1419,15 @@ class FuelCostCalculator {
         const cheapestIndex = 0;
         const mostExpensiveIndex = calculations.length - 1;
 
+        // Determine cleanest and dirtiest by CO2
+        const colCalcsWithCO2 = calculations.filter(c => c.co2TotalKg !== null);
+        const colSortedByCO2 = [...colCalcsWithCO2].sort((a, b) => a.co2TotalKg - b.co2TotalKg);
+        const colCleanestCalc = colSortedByCO2.length > 0 ? colSortedByCO2[0] : null;
+        const colDirtiestCalc = colSortedByCO2.length > 1 ? colSortedByCO2[colSortedByCO2.length - 1] : null;
+
         // Create header row - empty label cell + vehicle headers
         // In CSS Grid, all cells must be direct children, so we add them directly to the grid
-        
+
         // Empty label cell (first column, row 1)
         const emptyLabelCell = document.createElement('div');
         emptyLabelCell.className = 'column-view-label-cell';
@@ -1314,17 +1439,21 @@ class FuelCostCalculator {
             const variantName = variant.trim || variant.versionName || 'Unknown Variant';
             const makeModel = `${variant.make || ''} ${variant.model || ''}`.trim() || calc.vehicleName;
             const year = variant.modelYear || '';
-            
+
             const headerCell = document.createElement('div');
             headerCell.className = 'column-view-header-cell';
-            
+
             const color = columnColors[index % columnColors.length];
             const isCheapest = index === cheapestIndex;
             const isMostExpensive = index === mostExpensiveIndex;
-            
+            const isCleanest = colCleanestCalc && calc === colCleanestCalc;
+            const isDirtiest = colDirtiestCalc && calc === colDirtiestCalc;
+
             let badges = '';
             if (isCheapest) badges += '<span class="column-view-badge cheapest">Cheapest</span>';
             if (isMostExpensive && calculations.length > 1) badges += '<span class="column-view-badge expensive">Most Expensive</span>';
+            if (isCleanest) badges += '<span class="column-view-badge cleanest">Cleanest</span>';
+            if (isDirtiest) badges += '<span class="column-view-badge dirtiest">Most Emissions</span>';
             
             headerCell.innerHTML = `
                 <div class="column-view-header-content">
@@ -1341,16 +1470,18 @@ class FuelCostCalculator {
         // Create data rows: MSRP, Consumption, Energy Required, Cost per Unit, Total Cost
         // Each row has: label cell (column 1) + data cells for each vehicle (columns 2+)
         const rowLabels = [
-            { label: 'MSRP', key: 'price' },
+            { label: 'Retail price', key: 'price' },
             { label: 'Consumption', key: 'consumption' },
+            { label: 'CO2 Rate', key: 'co2Rate' },
             { label: 'Energy Required', key: 'energy' },
             { label: 'Cost per Unit', key: 'costPerUnit' },
-            { label: 'Total Cost', key: 'totalCost' }
+            { label: 'Total Cost', key: 'totalCost' },
+            { label: 'Total CO2', key: 'co2Total' }
         ];
 
         rowLabels.forEach((rowLabel, rowIndex) => {
             // Determine if this row should have special styling
-            const isTotalCostRow = rowIndex === rowLabels.length - 1;
+            const isTotalCostRow = rowLabel.key === 'totalCost';
 
             // Label cell (column 1 - leftmost)
             const labelCell = document.createElement('div');
@@ -1433,12 +1564,20 @@ class FuelCostCalculator {
                         dataCell.innerHTML = costPerUnitDisplay;
                         break;
                     
+                    case 'co2Rate':
+                        if (calc.co2RateGPerKm !== null) {
+                            dataCell.innerHTML = `${parseFloat(calc.co2RateGPerKm.toFixed(0)).toLocaleString('en-AU')} g/km`;
+                        } else {
+                            dataCell.textContent = 'N/A';
+                        }
+                        break;
+
                     case 'totalCost':
                         let totalCostDisplay = '';
                         let costClass = '';
                         if (isCheapest) costClass = 'cheapest';
                         else if (isMostExpensive && calculations.length > 1) costClass = 'expensive';
-                        
+
                         if (calc.isHybrid) {
                             totalCostDisplay = `<div class="column-view-total-cost ${costClass}">${this.formatCurrency(calc.totalCost)}${costSuffix}</div>`;
                             totalCostDisplay += `<div style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-top: 0.25rem;">`;
@@ -1456,6 +1595,14 @@ class FuelCostCalculator {
                             totalCostDisplay = `<div class="column-view-total-cost ${costClass}">${this.formatCurrency(calc.totalCost)}${costSuffix}</div>`;
                         }
                         dataCell.innerHTML = totalCostDisplay;
+                        break;
+
+                    case 'co2Total':
+                        if (calc.co2TotalKg !== null) {
+                            dataCell.innerHTML = `${parseFloat(calc.co2TotalKg.toFixed(1)).toLocaleString('en-AU')} kg${costSuffix}`;
+                        } else {
+                            dataCell.textContent = 'N/A';
+                        }
                         break;
                 }
                 
