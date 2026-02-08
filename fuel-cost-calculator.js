@@ -1,6 +1,17 @@
 // Fuel Cost Calculator JavaScript
 
 class FuelCostCalculator {
+    static GRID_EMISSION_FACTORS = {
+        'average': { label: 'Australian Average', factor: 0.68 },
+        'nsw_act': { label: 'NSW/ACT', factor: 0.73 },
+        'vic':     { label: 'VIC', factor: 0.85 },
+        'qld':     { label: 'QLD', factor: 0.73 },
+        'sa':      { label: 'SA', factor: 0.27 },
+        'wa':      { label: 'WA', factor: 0.59 },
+        'tas':     { label: 'TAS', factor: 0.13 },
+        'nt':      { label: 'NT', factor: 0.54 }
+    };
+
     constructor() {
         this.vehicleDataMap = {}; // Map of filename -> vehicle data
         this.variants = []; // Array of {variant, vehicleName, filename}
@@ -8,6 +19,7 @@ class FuelCostCalculator {
         this.selectedVehicles = new Set(); // Set of selected vehicle filenames
         this.allVehiclesEfficiencyCache = null; // Cache for all vehicles' efficiency data
         this.currentView = 'columns'; // Current view: 'table' or 'columns'
+        this.currentSort = 'cheapestFuel'; // Current sort: 'cheapestFuel', 'vehiclePrice', 'cleanest'
         this.fuelPriceData = null; // Store full fuel price data (latest, averages, history)
         this.priceChart = null; // Chart.js instance for price trend chart
         this.vehicleList = [
@@ -285,7 +297,7 @@ class FuelCostCalculator {
             this.displayPriceTrends(trendsDiv, priceData);
         }
 
-        infoDiv.style.display = 'block';
+        infoDiv.classList.remove('is-hidden');
     }
 
     displayPriceTrends(trendsDiv, priceData) {
@@ -304,13 +316,13 @@ class FuelCostCalculator {
             const change = latestPrice - oldPrice;
             const percentChange = (change / oldPrice) * 100;
             const arrow = change > 0 ? '↑' : change < 0 ? '↓' : '→';
-            const color = change > 0 ? '#ef4444' : change < 0 ? '#10b981' : '#6b7280';
+            const trendClass = change > 0 ? 'trend-up' : change < 0 ? 'trend-down' : 'trend-flat';
             const sign = change > 0 ? '+' : '';
 
             return `
-                <div style="font-size: 0.85rem;">
-                    <span style="font-weight: 600; color: var(--text-primary);">${label}:</span>
-                    <span style="color: ${color}; font-weight: 600; margin-left: 0.25rem;">
+                <div class="trend-indicator">
+                    <span class="trend-label">${label}:</span>
+                    <span class="trend-value ${trendClass}">
                         ${arrow} ${sign}${change.toFixed(1)}¢ (${sign}${percentChange.toFixed(1)}%)
                     </span>
                 </div>
@@ -333,7 +345,7 @@ class FuelCostCalculator {
         dropdown.innerHTML = this.vehicleList.map(vehicle => `
             <div class="vehicle-dropdown-item" data-filename="${vehicle.filename}">
                 <input type="checkbox" id="vehicle-${vehicle.filename}" value="${vehicle.filename}">
-                <label for="vehicle-${vehicle.filename}" style="cursor: pointer; flex: 1;">${vehicle.name}</label>
+                <label for="vehicle-${vehicle.filename}" class="vehicle-dropdown-label">${vehicle.name}</label>
             </div>
         `).join('');
 
@@ -533,6 +545,13 @@ class FuelCostCalculator {
             }
         });
 
+        // Grid region selector - recalculate EV emissions when changed
+        document.getElementById('grid-region-select').addEventListener('change', () => {
+            if (this.canCalculate()) {
+                this.calculateFuelCosts();
+            }
+        });
+
         // Variant filter
         document.getElementById('variant-filter').addEventListener('input', (e) => {
             this.filterVariants(e.target.value);
@@ -546,6 +565,56 @@ class FuelCostCalculator {
         document.getElementById('view-columns-btn').addEventListener('click', () => {
             this.switchView('columns');
         });
+
+        // Sort buttons
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const sortKey = btn.dataset.sort;
+                this.sortColumns(sortKey);
+            });
+        });
+    }
+
+    sortCalculations(calculations) {
+        switch (this.currentSort) {
+            case 'vehiclePrice':
+                calculations.sort((a, b) => {
+                    if (!a.price && !b.price) return 0;
+                    if (!a.price) return 1;
+                    if (!b.price) return -1;
+                    return a.price - b.price;
+                });
+                break;
+            case 'cleanest':
+                calculations.sort((a, b) => {
+                    if (a.co2TotalKg === null && b.co2TotalKg === null) return 0;
+                    if (a.co2TotalKg === null) return 1;
+                    if (b.co2TotalKg === null) return -1;
+                    return a.co2TotalKg - b.co2TotalKg;
+                });
+                break;
+            case 'cheapestFuel':
+            default:
+                calculations.sort((a, b) => a.totalCost - b.totalCost);
+                break;
+        }
+    }
+
+    sortColumns(sortKey) {
+        this.currentSort = sortKey;
+
+        // Update button states
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.sort === sortKey);
+        });
+
+        // Re-sort and re-render
+        if (this.currentCalculations.length > 0) {
+            this.sortCalculations(this.currentCalculations);
+            const calcType = document.querySelector('input[name="calculation-type"]:checked').value;
+            const distance = this.getDistance();
+            this.displayResults(this.currentCalculations, distance, calcType);
+        }
     }
 
     switchView(view) {
@@ -560,11 +629,11 @@ class FuelCostCalculator {
         const columnContainer = document.getElementById('results-column-container');
         
         if (view === 'table') {
-            if (tableContainer) tableContainer.style.display = 'block';
-            if (columnContainer) columnContainer.style.display = 'none';
+            if (tableContainer) tableContainer.classList.remove('is-hidden');
+            if (columnContainer) columnContainer.classList.add('is-hidden');
         } else {
-            if (tableContainer) tableContainer.style.display = 'none';
-            if (columnContainer) columnContainer.style.display = 'block';
+            if (tableContainer) tableContainer.classList.add('is-hidden');
+            if (columnContainer) columnContainer.classList.remove('is-hidden');
         }
         
         // Re-render current results in the selected view
@@ -621,11 +690,11 @@ class FuelCostCalculator {
         const annualGroup = document.getElementById('annual-group');
         
         if (calcType === 'annual') {
-            singleTripGroup.style.display = 'none';
-            annualGroup.style.display = 'block';
+            singleTripGroup.classList.add('is-hidden');
+            annualGroup.classList.remove('is-hidden');
         } else {
-            singleTripGroup.style.display = 'block';
-            annualGroup.style.display = 'none';
+            singleTripGroup.classList.remove('is-hidden');
+            annualGroup.classList.add('is-hidden');
         }
     }
 
@@ -827,16 +896,22 @@ class FuelCostCalculator {
         return null;
     }
 
+    getSelectedGridFactor() {
+        const select = document.getElementById('grid-region-select');
+        const region = select ? select.value : 'average';
+        return FuelCostCalculator.GRID_EMISSION_FACTORS[region]?.factor || 0.68;
+    }
+
     getCO2EmissionsRate(variant) {
         const engine = variant.engine || {};
         const drivingType = document.querySelector('input[name="driving-type"]:checked').value;
 
+        let tailpipeRate = null;
         if (drivingType === 'standard') {
             const combined = engine.emissionControlLevelCo2LevelCombined;
             if (combined && combined !== 'Not Available') {
-                return parseFloat(combined);
+                tailpipeRate = parseFloat(combined);
             }
-            return null;
         } else {
             // Custom mix: blend urban/highway CO2 rates using slider percentages
             const urban = engine.emissionControlLevelCo2LevelUrban;
@@ -846,16 +921,28 @@ class FuelCostCalculator {
                 // Fallback to combined if urban/highway not available
                 const combined = engine.emissionControlLevelCo2LevelCombined;
                 if (combined && combined !== 'Not Available') {
-                    return parseFloat(combined);
+                    tailpipeRate = parseFloat(combined);
                 }
-                return null;
+            } else {
+                const countryPercentage = parseInt(document.getElementById('country-slider').value) / 100;
+                const urbanPercentage = 1 - countryPercentage;
+                tailpipeRate = (parseFloat(urban) * urbanPercentage) + (parseFloat(highway) * countryPercentage);
             }
-
-            const countryPercentage = parseInt(document.getElementById('country-slider').value) / 100;
-            const urbanPercentage = 1 - countryPercentage;
-
-            return (parseFloat(urban) * urbanPercentage) + (parseFloat(highway) * countryPercentage);
         }
+
+        // For pure EVs (tailpipe CO2 is 0 or null), estimate grid emissions
+        if (tailpipeRate === null || tailpipeRate === 0) {
+            const electricConsumptionRate = this.getElectricEnergyConsumptionRate(variant);
+            if (electricConsumptionRate !== null && electricConsumptionRate > 0) {
+                // electricConsumptionRate is kWh/100km
+                // gridFactor is kg CO2/kWh
+                // Result: g CO2/km = (kWh/100km / 100) * kg CO2/kWh * 1000
+                const gridFactor = this.getSelectedGridFactor();
+                return (electricConsumptionRate / 100) * gridFactor * 1000;
+            }
+        }
+
+        return tailpipeRate;
     }
 
     getFuelTypeForCostCalculation(variant, hasFuelConsumptionData) {
@@ -1036,6 +1123,12 @@ class FuelCostCalculator {
             const co2RateGPerKm = this.getCO2EmissionsRate(variant);
             const co2TotalKg = co2RateGPerKm !== null ? (distance * co2RateGPerKm) / 1000 : null;
 
+            // Determine if CO2 is a grid estimate (pure EV with zero tailpipe emissions)
+            const tailpipeCO2 = variant.engine?.emissionControlLevelCo2LevelCombined;
+            const isGridEstimated = co2RateGPerKm !== null && co2RateGPerKm > 0 &&
+                (tailpipeCO2 === null || tailpipeCO2 === undefined || tailpipeCO2 === 'Not Available' || parseFloat(tailpipeCO2) === 0) &&
+                electricConsumptionRate !== null && electricConsumptionRate > 0;
+
             return {
                 variant: variant,
                 vehicleName: vehicleName,
@@ -1059,7 +1152,8 @@ class FuelCostCalculator {
                 isICE: fuelConsumptionRate !== null && electricConsumptionRate === null,
                 price: variant.price || null, // Include vehicle price
                 co2RateGPerKm: co2RateGPerKm,
-                co2TotalKg: co2TotalKg
+                co2TotalKg: co2TotalKg,
+                isGridEstimated: isGridEstimated
             };
         }).filter(calc => calc.hasData); // Only include variants with valid data
 
@@ -1068,8 +1162,9 @@ class FuelCostCalculator {
             return;
         }
 
-        // Sort by total cost
-        calculations.sort((a, b) => a.totalCost - b.totalCost);
+        // Sort by current sort mode
+        this.currentCalculations = calculations;
+        this.sortCalculations(calculations);
 
         // Display results
         const calcType = document.querySelector('input[name="calculation-type"]:checked').value;
@@ -1094,21 +1189,20 @@ class FuelCostCalculator {
     createResultsSummary(calculations, calcType) {
         const resultsSummary = document.getElementById('results-summary');
         const resultsPanel = document.getElementById('results-panel');
-        
+
         // Get selected vehicle names
         const selectedVehicleNames = Array.from(this.selectedVehicles)
             .map(filename => this.getVehicleNameFromFilename(filename));
-        const vehicleNamesText = selectedVehicleNames.length === 1 
-            ? selectedVehicleNames[0] 
+        const vehicleNamesText = selectedVehicleNames.length === 1
+            ? selectedVehicleNames[0]
             : `${selectedVehicleNames.length} Vehicles`;
-        
+
         // Update results panel title
         const resultsTitle = document.getElementById('results-title');
         if (resultsTitle) {
             resultsTitle.textContent = `${vehicleNamesText} - Fuel Cost Results`;
         }
 
-        // Helper function to build full vehicle details
         const buildVehicleDetails = (calc) => {
             const variant = calc.variant;
             const make = variant.make || '';
@@ -1121,123 +1215,87 @@ class FuelCostCalculator {
                 variant.engineLiters ? `${variant.engineLiters}L` : '',
                 variant.fuelType || ''
             ].filter(Boolean);
-            
+
             return {
                 makeModel: makeModel,
                 variant: variantName,
-                config: configDetails.join(' • ')
+                config: configDetails.join(' \u00b7 ')
             };
         };
 
-        // Create summary
-        const cheapest = calculations[0];
-        const mostExpensive = calculations[calculations.length - 1];
-
-        const cheapestDetails = buildVehicleDetails(cheapest);
-        const mostExpensiveDetails = buildVehicleDetails(mostExpensive);
-        const costSuffix = calcType === 'annual' ? '/year' : '';
+        // Sort by cost
+        const sortedByCost = [...calculations].sort((a, b) => a.totalCost - b.totalCost);
+        const cheapest = sortedByCost[0];
+        const mostExpensive = sortedByCost[sortedByCost.length - 1];
+        const costSuffix = calcType === 'annual' ? '/yr' : '';
         const costDifference = mostExpensive.totalCost - cheapest.totalCost;
 
-        // Find cleanest and dirtiest vehicles by CO2
+        // Sort by CO2
         const calcsWithCO2 = calculations.filter(c => c.co2TotalKg !== null);
         const sortedByCO2 = [...calcsWithCO2].sort((a, b) => a.co2TotalKg - b.co2TotalKg);
-        const cleanest = sortedByCO2.length > 0 ? sortedByCO2[0] : null;
-        const dirtiest = sortedByCO2.length > 1 ? sortedByCO2[sortedByCO2.length - 1] : null;
+        const hasCO2 = sortedByCO2.length > 1;
 
-        let emissionsSummaryHTML = '';
-        if (cleanest) {
-            const cleanestDetails = buildVehicleDetails(cleanest);
-            const dirtiestDetails = dirtiest ? buildVehicleDetails(dirtiest) : null;
-            const co2Suffix = calcType === 'annual' ? '/year' : '';
+        // Vehicle details for cost extremes
+        const cheapestDetails = buildVehicleDetails(cheapest);
+        const expensiveDetails = buildVehicleDetails(mostExpensive);
 
-            emissionsSummaryHTML = `
-                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid var(--border-color);">
-                        <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 1rem; font-size: 1.1rem;">Emissions</div>
-                        <div class="summary-rows">
-                            <div class="summary-row cleanest-row">
-                                <div class="summary-row-content">
-                                    <div class="summary-vehicle-details">
-                                        <div class="summary-vehicle-make-model">${cleanestDetails.makeModel} ${cleanestDetails.variant}</div>
-                                        ${cleanestDetails.config ? `<div class="summary-vehicle-config">${cleanestDetails.config}</div>` : ''}
-                                        <div class="summary-vehicle-badges">
-                                            <span class="table-badge badge-cleanest">Cleanest</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="summary-row-cost cleanest">${parseFloat(cleanest.co2TotalKg.toFixed(1)).toLocaleString('en-AU')} kg CO2${co2Suffix}</div>
-                            </div>`;
+        // CO2 extremes (may differ from cost extremes)
+        const cleanest = hasCO2 ? sortedByCO2[0] : null;
+        const dirtiest = hasCO2 ? sortedByCO2[sortedByCO2.length - 1] : null;
+        const cleanestDetails = cleanest ? buildVehicleDetails(cleanest) : null;
+        const dirtiestDetails = dirtiest ? buildVehicleDetails(dirtiest) : null;
 
-            if (dirtiest) {
-                const co2Difference = dirtiest.co2TotalKg - cleanest.co2TotalKg;
-                emissionsSummaryHTML += `
-                            <div class="summary-row dirtiest-row">
-                                <div class="summary-row-content">
-                                    <div class="summary-vehicle-details">
-                                        <div class="summary-vehicle-make-model">${dirtiestDetails.makeModel} ${dirtiestDetails.variant}</div>
-                                        ${dirtiestDetails.config ? `<div class="summary-vehicle-config">${dirtiestDetails.config}</div>` : ''}
-                                        <div class="summary-vehicle-badges">
-                                            <span class="table-badge badge-dirtiest">Most Emissions</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="summary-row-cost dirtiest">${parseFloat(dirtiest.co2TotalKg.toFixed(1)).toLocaleString('en-AU')} kg CO2${co2Suffix}</div>
-                            </div>
-                            <div class="summary-row difference-row">
-                                <div class="summary-row-content">
-                                    <div class="summary-vehicle-details">
-                                        <div class="summary-vehicle-make-model">CO2 Difference</div>
-                                    </div>
-                                </div>
-                                <div class="summary-row-cost highlight">${parseFloat(co2Difference.toFixed(1)).toLocaleString('en-AU')} kg CO2${co2Suffix}</div>
-                            </div>`;
+        const buildRow = (label, makeModel, variant, cost, co2, extraClass = '') => {
+            const co2Cell = hasCO2 && co2 !== null
+                ? `<div class="summary-table-value">${parseFloat(co2.toFixed(0)).toLocaleString('en-AU')} kg</div>`
+                : hasCO2 ? '<div class="summary-table-value">&mdash;</div>' : '';
+            const nameHtml = makeModel
+                ? `<span class="summary-table-label">${label}</span>${makeModel} ${variant}`
+                : label;
+            return `<div class="summary-table-row${extraClass ? ' ' + extraClass : ''}">
+                <div class="summary-table-vehicle">
+                    <div class="summary-table-name">${nameHtml}</div>
+                </div>
+                <div class="summary-table-value">${cost}</div>
+                ${co2Cell}
+            </div>`;
+        };
+
+        // Cost difference
+        const co2Diff = hasCO2 ? dirtiest.co2TotalKg - cleanest.co2TotalKg : null;
+
+        // Build cost section rows
+        let costRows = buildRow('Cheapest', cheapestDetails.makeModel, cheapestDetails.variant, this.formatCurrency(cheapest.totalCost) + costSuffix, cheapest.co2TotalKg);
+        costRows += buildRow('Most Expensive', expensiveDetails.makeModel, expensiveDetails.variant, this.formatCurrency(mostExpensive.totalCost) + costSuffix, mostExpensive.co2TotalKg);
+        costRows += buildRow('', null, null, this.formatCurrency(costDifference) + costSuffix, co2Diff, 'summary-diff-row');
+
+        // Build emissions section rows (only if cleanest/dirtiest differ from cost extremes)
+        let emissionsRows = '';
+        if (hasCO2) {
+            const cleanestIsSameAsCheapest = cleanest === cheapest;
+            const dirtiestIsSameAsExpensive = dirtiest === mostExpensive;
+            if (!cleanestIsSameAsCheapest || !dirtiestIsSameAsExpensive) {
+                emissionsRows = `<div class="summary-table-section-label">Emissions</div>`;
+                emissionsRows += buildRow('Cleanest', cleanestDetails.makeModel, cleanestDetails.variant, this.formatCurrency(cleanest.totalCost) + costSuffix, cleanest.co2TotalKg);
+                emissionsRows += buildRow('Most Emissions', dirtiestDetails.makeModel, dirtiestDetails.variant, this.formatCurrency(dirtiest.totalCost) + costSuffix, dirtiest.co2TotalKg);
+                emissionsRows += buildRow('', null, null, this.formatCurrency(Math.abs(dirtiest.totalCost - cleanest.totalCost)) + costSuffix, co2Diff, 'summary-diff-row');
             }
-
-            emissionsSummaryHTML += `
-                        </div>
-                    </div>`;
         }
 
+        const co2Header = hasCO2 ? '<span>CO2</span>' : '';
+
         resultsSummary.innerHTML = `
-            <div class="summary-title">Results</div>
-            <div class="summary-content">
-                <div class="summary-rows">
-                    <div class="summary-row cheapest-row">
-                        <div class="summary-row-content">
-                            <div class="summary-vehicle-details">
-                                <div class="summary-vehicle-make-model">${cheapestDetails.makeModel} ${cheapestDetails.variant}</div>
-                                ${cheapestDetails.config ? `<div class="summary-vehicle-config">${cheapestDetails.config}</div>` : ''}
-                                <div class="summary-vehicle-badges">
-                                    <span class="table-badge badge-cheapest">Cheapest</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="summary-row-cost cheapest">${this.formatCurrency(cheapest.totalCost)}${costSuffix}</div>
-                    </div>
-                    <div class="summary-row expensive-row">
-                        <div class="summary-row-content">
-                            <div class="summary-vehicle-details">
-                                <div class="summary-vehicle-make-model">${mostExpensiveDetails.makeModel} ${mostExpensiveDetails.variant}</div>
-                                ${mostExpensiveDetails.config ? `<div class="summary-vehicle-config">${mostExpensiveDetails.config}</div>` : ''}
-                                <div class="summary-vehicle-badges">
-                                    <span class="table-badge badge-expensive">Most Expensive</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="summary-row-cost expensive">${this.formatCurrency(mostExpensive.totalCost)}${costSuffix}</div>
-                    </div>
-                    <div class="summary-row difference-row">
-                        <div class="summary-row-content">
-                            <div class="summary-vehicle-details">
-                                <div class="summary-vehicle-make-model">Cost Difference</div>
-                            </div>
-                        </div>
-                        <div class="summary-row-cost highlight">${this.formatCurrency(costDifference)}${costSuffix}</div>
-                    </div>
+            <div class="summary-table">
+                <div class="summary-table-header">
+                    <span>Vehicle</span>
+                    <span>Fuel Cost</span>
+                    ${co2Header}
                 </div>
-                ${emissionsSummaryHTML}
+                ${costRows}
+                ${emissionsRows}
             </div>
         `;
-        
+
         // Show results panel
         resultsPanel.classList.add('active');
         this.hideError();
@@ -1252,7 +1310,10 @@ class FuelCostCalculator {
         resultsTableBody.innerHTML = '';
         variantFilter.value = '';
 
-        // Determine cleanest/dirtiest for CO2 badges
+        // Determine cheapest/expensive by cost and cleanest/dirtiest by CO2
+        const tblSortedByCost = [...calculations].sort((a, b) => a.totalCost - b.totalCost);
+        const tblCheapestCalc = tblSortedByCost[0];
+        const tblExpensiveCalc = tblSortedByCost.length > 1 ? tblSortedByCost[tblSortedByCost.length - 1] : null;
         const calcsWithCO2 = calculations.filter(c => c.co2TotalKg !== null);
         const sortedByCO2 = [...calcsWithCO2].sort((a, b) => a.co2TotalKg - b.co2TotalKg);
         const cleanestCalc = sortedByCO2.length > 0 ? sortedByCO2[0] : null;
@@ -1260,8 +1321,8 @@ class FuelCostCalculator {
 
         // Create table rows
         calculations.forEach((calc, index) => {
-            const isCheapest = index === 0;
-            const isMostExpensive = index === calculations.length - 1 && calculations.length > 1;
+            const isCheapest = calc === tblCheapestCalc;
+            const isMostExpensive = tblExpensiveCalc && calc === tblExpensiveCalc;
             const isCleanest = cleanestCalc && calc === cleanestCalc;
             const isDirtiest = dirtiestCalc && calc === dirtiestCalc;
 
@@ -1311,7 +1372,7 @@ class FuelCostCalculator {
             // Build cost per unit display
             let costPerUnitDisplay = '';
             if (calc.costPerLitre > 0) {
-                costPerUnitDisplay += `${parseFloat(calc.costPerLitreCents.toFixed(1)).toLocaleString('en-AU', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} c/L<br><span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">(${calc.fuelType})</span>`;
+                costPerUnitDisplay += `${parseFloat(calc.costPerLitreCents.toFixed(1)).toLocaleString('en-AU', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} c/L<br><span class="detail-secondary-text">(${calc.fuelType})</span>`;
             }
             if (calc.costPerKwh > 0) {
                 if (costPerUnitDisplay) costPerUnitDisplay += '<br>';
@@ -1323,7 +1384,7 @@ class FuelCostCalculator {
             let totalCostDisplay = '';
             if (calc.isHybrid) {
                 totalCostDisplay = `${this.formatCurrency(calc.totalCost)}${costSuffix}<br>`;
-                totalCostDisplay += `<span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">`;
+                totalCostDisplay += `<span class="cost-breakdown">`;
                 if (calc.fuelCost > 0) {
                     totalCostDisplay += `Fuel: ${this.formatCurrency(calc.fuelCost)}`;
                 }
@@ -1339,13 +1400,14 @@ class FuelCostCalculator {
             }
 
             // Build CO2 rate display
+            const gridEstLabel = calc.isGridEstimated ? ' <span class="detail-secondary-text">(grid est.)</span>' : '';
             const co2RateDisplay = calc.co2RateGPerKm !== null
-                ? `${parseFloat(calc.co2RateGPerKm.toFixed(0)).toLocaleString('en-AU')} g/km`
+                ? `${parseFloat(calc.co2RateGPerKm.toFixed(0)).toLocaleString('en-AU')} g/km${gridEstLabel}`
                 : 'N/A';
 
             // Build total CO2 display
             const co2TotalDisplay = calc.co2TotalKg !== null
-                ? `${parseFloat(calc.co2TotalKg.toFixed(1)).toLocaleString('en-AU')} kg${costSuffix}`
+                ? `${parseFloat(calc.co2TotalKg.toFixed(1)).toLocaleString('en-AU')} kg${costSuffix}${gridEstLabel}`
                 : 'N/A';
 
             row.innerHTML = `
@@ -1377,7 +1439,7 @@ class FuelCostCalculator {
         this.updateFilterCount();
 
         // Show results
-        resultsTablePanel.style.display = 'block';
+        resultsTablePanel.classList.remove('is-hidden');
         this.updateFilterCount();
 
         // Display efficiency graph
@@ -1415,9 +1477,10 @@ class FuelCostCalculator {
             '#ef4444'  // red
         ];
 
-        // Determine cheapest and most expensive indices
-        const cheapestIndex = 0;
-        const mostExpensiveIndex = calculations.length - 1;
+        // Determine cheapest and most expensive by total cost (regardless of current sort)
+        const sortedByCost = [...calculations].sort((a, b) => a.totalCost - b.totalCost);
+        const cheapestCalc = sortedByCost[0];
+        const mostExpensiveCalc = sortedByCost.length > 1 ? sortedByCost[sortedByCost.length - 1] : null;
 
         // Determine cleanest and dirtiest by CO2
         const colCalcsWithCO2 = calculations.filter(c => c.co2TotalKg !== null);
@@ -1444,8 +1507,8 @@ class FuelCostCalculator {
             headerCell.className = 'column-view-header-cell';
 
             const color = columnColors[index % columnColors.length];
-            const isCheapest = index === cheapestIndex;
-            const isMostExpensive = index === mostExpensiveIndex;
+            const isCheapest = calc === cheapestCalc;
+            const isMostExpensive = mostExpensiveCalc && calc === mostExpensiveCalc;
             const isCleanest = colCleanestCalc && calc === colCleanestCalc;
             const isDirtiest = colDirtiestCalc && calc === colDirtiestCalc;
 
@@ -1489,13 +1552,8 @@ class FuelCostCalculator {
             labelCell.textContent = rowLabel.label;
             if (isTotalCostRow) {
                 // Apply special styling classes to label cell for total cost row
-                calculations.forEach((calc, idx) => {
-                    if (idx === cheapestIndex) {
-                        labelCell.classList.add('cheapest-label');
-                    } else if (idx === mostExpensiveIndex && calculations.length > 1) {
-                        labelCell.classList.add('expensive-label');
-                    }
-                });
+                if (cheapestCalc) labelCell.classList.add('cheapest-label');
+                if (mostExpensiveCalc) labelCell.classList.add('expensive-label');
             }
             columnGrid.appendChild(labelCell);
 
@@ -1506,15 +1564,15 @@ class FuelCostCalculator {
                 
                 // Apply row-level classes for styling
                 if (isTotalCostRow) {
-                    if (vehicleIndex === cheapestIndex) {
+                    if (calc === cheapestCalc) {
                         dataCell.classList.add('cheapest-cell');
-                    } else if (vehicleIndex === mostExpensiveIndex && calculations.length > 1) {
+                    } else if (calc === mostExpensiveCalc) {
                         dataCell.classList.add('expensive-cell');
                     }
                 }
-                
-                const isCheapest = vehicleIndex === cheapestIndex;
-                const isMostExpensive = vehicleIndex === mostExpensiveIndex;
+
+                const isCheapest = calc === cheapestCalc;
+                const isMostExpensive = mostExpensiveCalc && calc === mostExpensiveCalc;
 
                 switch (rowLabel.key) {
                     case 'price':
@@ -1554,7 +1612,7 @@ class FuelCostCalculator {
                     case 'costPerUnit':
                         let costPerUnitDisplay = '';
                         if (calc.costPerLitre > 0) {
-                            costPerUnitDisplay += `${parseFloat(calc.costPerLitreCents.toFixed(1)).toLocaleString('en-AU', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} c/L<br><span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">(${calc.fuelType})</span>`;
+                            costPerUnitDisplay += `${parseFloat(calc.costPerLitreCents.toFixed(1)).toLocaleString('en-AU', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} c/L<br><span class="detail-secondary-text">(${calc.fuelType})</span>`;
                         }
                         if (calc.costPerKwh > 0) {
                             if (costPerUnitDisplay) costPerUnitDisplay += '<br>';
@@ -1566,7 +1624,8 @@ class FuelCostCalculator {
                     
                     case 'co2Rate':
                         if (calc.co2RateGPerKm !== null) {
-                            dataCell.innerHTML = `${parseFloat(calc.co2RateGPerKm.toFixed(0)).toLocaleString('en-AU')} g/km`;
+                            const colGridEst = calc.isGridEstimated ? '<br><span class="detail-secondary-text">(grid est.)</span>' : '';
+                            dataCell.innerHTML = `${parseFloat(calc.co2RateGPerKm.toFixed(0)).toLocaleString('en-AU')} g/km${colGridEst}`;
                         } else {
                             dataCell.textContent = 'N/A';
                         }
@@ -1580,7 +1639,7 @@ class FuelCostCalculator {
 
                         if (calc.isHybrid) {
                             totalCostDisplay = `<div class="column-view-total-cost ${costClass}">${this.formatCurrency(calc.totalCost)}${costSuffix}</div>`;
-                            totalCostDisplay += `<div style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-top: 0.25rem;">`;
+                            totalCostDisplay += `<div class="cost-breakdown">`;
                             if (calc.fuelCost > 0) {
                                 totalCostDisplay += `Fuel: ${this.formatCurrency(calc.fuelCost)}`;
                             }
@@ -1599,7 +1658,8 @@ class FuelCostCalculator {
 
                     case 'co2Total':
                         if (calc.co2TotalKg !== null) {
-                            dataCell.innerHTML = `${parseFloat(calc.co2TotalKg.toFixed(1)).toLocaleString('en-AU')} kg${costSuffix}`;
+                            const colTotalGridEst = calc.isGridEstimated ? '<br><span class="detail-secondary-text">(grid est.)</span>' : '';
+                            dataCell.innerHTML = `${parseFloat(calc.co2TotalKg.toFixed(1)).toLocaleString('en-AU')} kg${costSuffix}${colTotalGridEst}`;
                         } else {
                             dataCell.textContent = 'N/A';
                         }
@@ -1611,8 +1671,8 @@ class FuelCostCalculator {
         });
 
         // Show results
-        resultsTablePanel.style.display = 'block';
-        columnContainer.style.display = 'block';
+        resultsTablePanel.classList.remove('is-hidden');
+        columnContainer.classList.remove('is-hidden');
 
         // Display efficiency graph
         this.displayEfficiencyGraph(calculations);
@@ -1790,7 +1850,7 @@ class FuelCostCalculator {
         existingTooltips.forEach(tooltip => tooltip.remove());
 
         if (calculations.length === 0) {
-            graphContainer.style.display = 'none';
+            graphContainer.classList.add('is-hidden');
             return;
         }
 
@@ -1860,7 +1920,7 @@ class FuelCostCalculator {
         }).filter(item => item.efficiencyValue !== null);
 
         if (efficiencyData.length === 0) {
-            graphContainer.style.display = 'none';
+            graphContainer.classList.add('is-hidden');
             return;
         }
 
@@ -2072,24 +2132,28 @@ class FuelCostCalculator {
         });
 
         // Show graph container
-        graphContainer.style.display = 'block';
+        graphContainer.classList.remove('is-hidden');
     }
 
     showLoading(show) {
         const loadingState = document.getElementById('loading-state');
-        loadingState.style.display = show ? 'block' : 'none';
+        if (show) {
+            loadingState.classList.remove('is-hidden');
+        } else {
+            loadingState.classList.add('is-hidden');
+        }
     }
 
     showError(message) {
         const errorMessage = document.getElementById('error-message');
         const errorText = document.getElementById('error-text');
         errorText.textContent = message;
-        errorMessage.style.display = 'block';
+        errorMessage.classList.remove('is-hidden');
     }
 
     hideError() {
         const errorMessage = document.getElementById('error-message');
-        errorMessage.style.display = 'none';
+        errorMessage.classList.add('is-hidden');
     }
 
     hideResults() {
@@ -2098,12 +2162,12 @@ class FuelCostCalculator {
         const columnContainer = document.getElementById('results-column-container');
         const graphContainer = document.getElementById('efficiency-graph-container');
         resultsPanel.classList.remove('active');
-        resultsTablePanel.style.display = 'none';
+        resultsTablePanel.classList.add('is-hidden');
         if (columnContainer) {
-            columnContainer.style.display = 'none';
+            columnContainer.classList.add('is-hidden');
         }
         if (graphContainer) {
-            graphContainer.style.display = 'none';
+            graphContainer.classList.add('is-hidden');
         }
     }
 
@@ -2124,10 +2188,10 @@ class FuelCostCalculator {
             const searchableText = `${variantName} ${vehicleName} ${makeModel} ${fuelType} ${transmission} ${trim} ${year}`;
 
             if (!filterText || searchableText.includes(filterText)) {
-                row.style.display = '';
+                row.classList.remove('is-hidden');
                 visibleCount++;
             } else {
-                row.style.display = 'none';
+                row.classList.add('is-hidden');
             }
         });
 
@@ -2143,7 +2207,7 @@ class FuelCostCalculator {
 
     updateFilterCount() {
         const tableRows = document.querySelectorAll('#results-table-body tr');
-        const visibleRows = Array.from(tableRows).filter(row => row.style.display !== 'none');
+        const visibleRows = Array.from(tableRows).filter(row => !row.classList.contains('is-hidden'));
         const totalCount = tableRows.length;
         const filterCountElement = document.getElementById('filter-count');
         filterCountElement.textContent = `${totalCount} variants`;
@@ -2154,7 +2218,7 @@ class FuelCostCalculator {
         const canvas = document.getElementById('price-trend-chart');
 
         if (!container || !canvas || !history || history.length < 2) {
-            if (container) container.style.display = 'none';
+            if (container) container.classList.add('is-hidden');
             return;
         }
 
@@ -2215,7 +2279,7 @@ class FuelCostCalculator {
         }
 
         if (datasets.length === 0) {
-            container.style.display = 'none';
+            container.classList.add('is-hidden');
             return;
         }
 
@@ -2307,7 +2371,7 @@ class FuelCostCalculator {
         });
 
         // Show container
-        container.style.display = 'block';
+        container.classList.remove('is-hidden');
     }
 }
 
