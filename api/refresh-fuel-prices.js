@@ -217,8 +217,8 @@ async function updateEdgeConfigWithHistory(todaysPrices) {
   }
 
   // Step 2: Build history array
-  // Note: Vercel Management API returns { key, value, ... } so data is in .value
-  let history = existingData?.value?.history || [];
+  // Edge Config SDK get() returns the value directly (no .value wrapper)
+  let history = existingData?.history || [];
 
   // Add today's prices to history (without dataPoints to save space)
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
