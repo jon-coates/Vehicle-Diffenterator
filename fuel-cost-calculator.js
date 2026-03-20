@@ -2222,8 +2222,8 @@ class FuelCostCalculator {
             return;
         }
 
-        // Show last 30 days (already in chronological order)
-        const chartData = history.slice(0, 30);
+        // History is stored newest-first; reverse to display oldest→newest (left→right)
+        const chartData = history.slice(0, 30).reverse();
 
         // Extract dates and data for each fuel type
         const labels = chartData.map(d => {
